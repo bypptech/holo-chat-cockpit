@@ -1,0 +1,69 @@
+{
+  "title": "マイデバイス",
+  "subtitle": "接続されたデバイスとAR設定を管理",
+  "overview": {
+    "title": "デバイス概要",
+    "connected": "接続済み",
+    "total": "総デバイス数",
+    "avgSignal": "平均信号強度"
+  },
+  "quickActions": {
+    "title": "クイックアクション",
+    "scanDevices": "デバイススキャン",
+    "scanning": "スキャン中...",
+    "addDevice": "デバイス追加",
+    "testSignal": "信号テスト",
+    "settings": "設定"
+  },
+  "categories": {
+    "media": "メディアデバイス",
+    "smartHome": "スマートホームデバイス",
+    "industrial": "産業用デバイス"
+  },
+  "addNewDevice": "新しいデバイスを追加",
+  "deviceSettings": {
+    "title": "デバイス設定",
+    "autoConnect": {
+      "title": "自動接続",
+      "subtitle": "既知のデバイスに自動的に接続"
+    },
+    "lowPowerMode": {
+      "title": "低電力モード",
+      "subtitle": "バッテリーデバイスの消費電力を削減"
+    },
+    "secureMode": {
+      "title": "セキュアモード",
+      "subtitle": "すべての接続に対する強化されたセキュリティプロトコル"
+    },
+    "backgroundSync": {
+      "title": "バックグラウンド同期",
+      "subtitle": "バックグラウンドでデバイスデータを同期"
+    }
+  },
+  "statistics": {
+    "title": "デバイス統計",
+    "wifiDevices": "WiFiデバイス",
+    "bluetooth": "Bluetooth",
+    "industrial": "産業用"
+  },
+  "alerts": {
+    "scanComplete": "スキャン完了",
+    "scanCompleteMessage": "デバイススキャンが正常に完了しました。",
+    "scanError": "エラー",
+    "scanErrorMessage": "デバイススキャンに失敗しました。"
+  },
+  "chatIntegration": {
+    "title": "チャット統合",
+    "enable": "チャット制御を有効にする",
+    "enabled": "デバイスはチャットで利用可能",
+    "disabled": "デバイスはチャットで利用不可",
+    "description": "このデバイスをチャットで制御できるようにします"
+  },
+  "controllerIntegration": {
+    "title": "コントローラー統合",
+    "enable": "コントローラー表示を有効にする",
+    "enabled": "デバイスはコントローラーで利用可能",
+    "disabled": "デバイスはコントローラーで利用不可",
+    "description": "このデバイスをコントローラータブに表示します"
+  }
+}

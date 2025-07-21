@@ -1,0 +1,68 @@
+{
+  "title": "Controller",
+  "esp32Controller": "ESP32 Gacha Controller",
+  "quickActions": {
+    "title": "Quick Actions",
+    "testDevice": "Test Device"
+  },
+  "authentication": {
+    "login": "Login",
+    "logout": "Logout",
+    "authRequired": "Auth Required",
+    "loginSuccessful": "Login Successful",
+    "loginSuccessfulMessage": "Authenticated with Internet Identity\nPrincipal: {{principal}}...",
+    "loginError": "Login Error",
+    "loginFailed": "Login failed",
+    "logoutConfirm": "Logout",
+    "logoutConfirmMessage": "Are you sure you want to logout from Internet Identity?",
+    "internetIdentity": "Internet Identity",
+    "internetIdentitySubtitle": "Secure authentication for device management.",
+    "localNetwork": "Local",
+    "mainnet": "Mainnet",
+    "localNote": "Note: Local network is for development only."
+  },
+  "esp32": {
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "deviceControl": "Device Control",
+    "processing": "Processing...",
+    "wait": "Wait {{seconds}}s",
+    "duration": "Duration: 5s",
+    "intensity": "Intensity: Medium",
+    "success": "Success",
+    "successMessage": "Device operation completed successfully",
+    "error": "Error",
+    "errorMessage": "Communication error occurred",
+    "authenticationRequired": "Authentication Required",
+    "authenticationRequiredMessage": "Please complete authentication first.",
+    "authRequired": "Auth Required"
+  },
+  "capsule": {
+    "received": "Capsule Received!",
+    "receivedMessage": "Successfully received 2 signals from ESP32",
+    "signal1": "Signal 1: {{data}}",
+    "signal2": "Signal 2: {{data}}",
+    "receivedAt": "Received: {{time}}",
+    "continueOperation": "Continue Operation",
+    "continue": "Continue",
+    "continueMessage": "Starting next operation"
+  },
+  "connectedDevices": "Connected Devices",
+  "noDevices": {
+    "title": "No Control-Enabled Devices",
+    "subtitle": "Enable controller integration in the Devices tab"
+  },
+  "device": {
+    "operation": "Device Operation",
+    "operationDescription": "Control authenticated devices",
+    "operationButton": "Device Operation",
+    "communicating": "Communicating...",
+    "waitSeconds": "{{seconds}}s until next operation",
+    "operationComplete": "Operation Complete",
+    "operationCompleteMessage": "Device operation completed successfully\nCanister response: {{response}}",
+    "operationFailed": "Operation Failed",
+    "operationFailedMessage": "Device control failed: {{error}}",
+    "checkingAuth": "Checking authentication status...",
+    "principal": "Principal: "
+  }
+}

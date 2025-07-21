@@ -1,0 +1,34 @@
+{
+  "title": "ARカメラ",
+  "subtitle": "オブジェクトにカメラを向けて検出・制御",
+  "permissions": {
+    "title": "ARカメラアクセス",
+    "subtitle": "このアプリはカメラを使用してオブジェクトを検出し、リアルタイムでインタラクティブなAR制御を表示します。",
+    "grant": "カメラアクセスを許可",
+    "features": {
+      "detection": "リアルタイムオブジェクト検出",
+      "controls": "インタラクティブAR制御パネル",
+      "security": "安全なローカル処理"
+    },
+    "privacy": "カメラデータはローカルで処理され、外部サーバーに送信されることはありません。"
+  },
+  "overlay": {
+    "scanning": "スキャン中...",
+    "paused": "スキャン一時停止",
+    "objectsDetected": "{{count}}個のオブジェクトを検出",
+    "pointAtObject": "オブジェクトにカメラを向けてください",
+    "tapToInteract": "オブジェクトをタップして操作",
+    "webDemo": "📱 Webデモモード - フルAR体験にはモバイルにインストールしてください"
+  },
+  "controls": {
+    "connect": "接続",
+    "disconnect": "切断",
+    "connecting": "接続中...",
+    "deviceControls": "デバイス制御"
+  },
+  "stats": {
+    "active": "アクティブ",
+    "connecting": "接続中",
+    "inactive": "非アクティブ"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "title": "My Devices",
+  "subtitle": "Manage connected devices and AR configurations",
+  "overview": {
+    "title": "Device Overview",
+    "connected": "Connected",
+    "total": "Total Devices",
+    "avgSignal": "Avg Signal"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "scanDevices": "Scan Devices",
+    "scanning": "Scanning...",
+    "addDevice": "Add Device",
+    "testSignal": "Test Signal",
+    "settings": "Settings"
+  },
+  "categories": {
+    "media": "Media Devices",
+    "smartHome": "Smart Home Devices",
+    "industrial": "Industrial Devices"
+  },
+  "addNewDevice": "Add New Device",
+  "deviceSettings": {
+    "title": "Device Settings",
+    "autoConnect": {
+      "title": "Auto Connect",
+      "subtitle": "Automatically connect to known devices"
+    },
+    "lowPowerMode": {
+      "title": "Low Power Mode",
+      "subtitle": "Reduce power consumption for battery devices"
+    },
+    "secureMode": {
+      "title": "Secure Mode",
+      "subtitle": "Enhanced security protocols for all connections"
+    },
+    "backgroundSync": {
+      "title": "Background Sync",
+      "subtitle": "Sync device data in background"
+    }
+  },
+  "statistics": {
+    "title": "Device Statistics",
+    "wifiDevices": "WiFi Devices",
+    "bluetooth": "Bluetooth",
+    "industrial": "Industrial"
+  },
+  "alerts": {
+    "scanComplete": "Scan Complete",
+    "scanCompleteMessage": "Device scan completed successfully.",
+    "scanError": "Error",
+    "scanErrorMessage": "Device scan failed."
+  },
+  "chatIntegration": {
+    "title": "Chat Integration",
+    "enable": "Enable Chat Control",
+    "enabled": "Device available in chat",
+    "disabled": "Device not available in chat",
+    "description": "Allow this device to be controlled via chat"
+  },
+  "controllerIntegration": {
+    "title": "Controller Integration",
+    "enable": "Enable Controller Display",
+    "enabled": "Device available in controller",
+    "disabled": "Device not available in controller",
+    "description": "Show this device in the controller tab"
+  }
+}

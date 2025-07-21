@@ -1,0 +1,47 @@
+{
+  "title": "Device Chat",
+  "subtitle": "Control your devices with natural language",
+  "connectedDevices": "Connected Devices",
+  "quickCommands": {
+    "turnOnTV": "Turn on TV",
+    "setTemperature": "Set temperature to 22°C",
+    "playMusic": "Play music",
+    "checkDevices": "Check all devices"
+  },
+  "input": {
+    "placeholder": "Type a command or question...",
+    "thinking": "AI Assistant is thinking..."
+  },
+  "actions": {
+    "executePrompt": "Execute action?",
+    "execute": "Execute",
+    "cancel": "Cancel",
+    "confirmationRequired": "⚠️ Confirmation required",
+    "executed": "✅ Action executed successfully",
+    "cancelled": "Action cancelled",
+    "failed": "Failed to execute action"
+  },
+  "responses": {
+    "welcome": "Hello! I can help you control your connected devices. Try saying \"Turn on the living room TV\" or \"Set temperature to 22 degrees\".",
+    "tvOn": "📺 Living Room TV is now ON. Current channel: Netflix Home",
+    "volumeAdjusted": "🔊 Volume adjusted to 65%. Would you like me to change the channel?",
+    "tvReady": "📺 TV is ready for commands. I can change channels, adjust volume, or switch inputs.",
+    "thermostatSet": "🌡️ Thermostat set to {{temp}}°C. Current temperature: 20°C. Heating mode activated.",
+    "thermostatStatus": "🌡️ Current temperature is 20°C, set to 22°C. Would you like to adjust it?",
+    "speakerOffline": "🔇 Kitchen Speaker is currently offline. Last seen 1 hour ago. Would you like me to try reconnecting?",
+    "speakerReady": "🎵 Speaker connected! What would you like to play?",
+    "industrialStatus": "⚙️ Industrial Panel A status: Normal operation. Pressure: 85%. All systems green.",
+    "deviceNotSpecified": "I understand you want to \"{{command}}\". Could you specify which device? I can control: {{devices}}."
+  },
+  "noDevices": {
+    "title": "No Chat-Enabled Devices",
+    "subtitle": "Enable chat integration in the Devices tab",
+    "description": "There are currently no devices available for chat control. Please enable chat integration for devices in the Devices tab."
+  },
+  "database": {
+    "logging": "Logging",
+    "ready": "Ready",
+    "notConfigured": "No DB",
+    "viewer": "Database Viewer"
+  }
+}

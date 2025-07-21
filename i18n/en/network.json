@@ -1,0 +1,54 @@
+{
+  "title": "Network Center",
+  "subtitle": "Network Status & Connectivity Management",
+  "networkStatus": "Network Status",
+  "wifi": "WiFi",
+  "blockchain": "Blockchain",
+  "bluetooth": "Bluetooth",
+  "webSocket": "WebSocket",
+  "blockchainConnection": "Blockchain Connection",
+  "icpConnected": "ICP Connected",
+  "connectToIcp": "Connect to ICP",
+  "connectToIcpSubtitle": "Connect to Internet Computer Protocol network",
+  "connectWithInternetIdentity": "Connect with Internet Identity",
+  "switchNetwork": "Switch Network",
+  "canisterIds": "Canister IDs",
+  "backendCanister": "Backend Canister",
+  "frontendCanister": "Frontend Canister",
+  "networkSettings": "Network Settings",
+  "networkPerformance": "Network Performance",
+  "wifiSignal": "WiFi Signal",
+  "latency": "Latency",
+  "uptime": "Uptime",
+  "settings": {
+    "wifi": {
+      "title": "WiFi",
+      "subtitle": "Enable WiFi connectivity"
+    },
+    "bluetooth": {
+      "title": "Bluetooth",
+      "subtitle": "Enable Bluetooth networking"
+    },
+    "webSocket": {
+      "title": "WebSocket",
+      "subtitle": "Enable WebSocket connections"
+    },
+    "autoConnect": {
+      "title": "Auto Connect",
+      "subtitle": "Automatically connect to known networks"
+    }
+  },
+  "networks": {
+    "local": "Local Network",
+    "testnet": "Testnet",
+    "mainnet": "Mainnet"
+  },
+  "alerts": {
+    "connected": "Success",
+    "connectedMessage": "Connected to {{network}} network",
+    "logout": "Logout",
+    "logoutMessage": "Are you sure you want to disconnect from ICP?",
+    "copied": "Copied",
+    "copiedMessage": "Copied to clipboard"
+  }
+}

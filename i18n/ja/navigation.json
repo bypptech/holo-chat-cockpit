@@ -1,0 +1,22 @@
+{
+  "tabs": {
+    "index": "ICP",
+    "button": "タッチUI",
+    "camera": "ARカメラ",
+    "chat": "チャット",
+    "devices": "端末",
+    "controls": "操作",
+    "network": "ネットワーク",
+    "settings": "設定"
+  },
+  "screens": {
+    "index": "ICP",
+    "button": "タッチUI",
+    "arCamera": "ARカメラ",
+    "deviceChat": "チャット",
+    "myDevices": "端末",
+    "controller": "操作",
+    "networkCenter": "ネットワーク",
+    "settings": "設定"
+  }
+}

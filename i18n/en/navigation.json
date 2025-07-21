@@ -1,0 +1,22 @@
+{
+  "tabs": {
+    "index": "ICP",
+    "button": "Touch UI",
+    "camera": "AR Camera",
+    "chat": "Chat",
+    "devices": "Devices",
+    "controls": "Controller",
+    "network": "Network",
+    "settings": "Settings"
+  },
+  "screens": {
+    "index": "ICP",
+    "button": "Touch UI",
+    "arCamera": "AR Camera",
+    "deviceChat": "Chat",
+    "myDevices": "Devices",
+    "controller": "Controller",
+    "networkCenter": "Network",
+    "settings": "Settings"
+  }
+}

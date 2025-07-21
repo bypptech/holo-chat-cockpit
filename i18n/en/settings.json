@@ -1,0 +1,76 @@
+{
+  "title": "Settings",
+  "subtitle": "Customize your experience",
+  "sections": {
+    "appearance": "Appearance",
+    "detection": "Detection",
+    "feedback": "Feedback",
+    "privacy": "Privacy & Security",
+    "support": "Support"
+  },
+  "appearance": {
+    "theme": {
+      "title": "Theme",
+      "subtitle": "Current: {{mode}}",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "title": "Language",
+      "subtitle": "Current: {{language}}",
+      "english": "English",
+      "japanese": "日本語"
+    }
+  },
+  "detection": {
+    "autoDetection": {
+      "title": "Auto Detection",
+      "subtitle": "Automatically detect objects when camera opens"
+    },
+    "sensitivity": {
+      "title": "Detection Sensitivity",
+      "subtitle": "Adjust object detection accuracy"
+    }
+  },
+  "feedback": {
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Show detection and interaction alerts"
+    },
+    "soundEffects": {
+      "title": "Sound Effects",
+      "subtitle": "Play sounds for AR interactions"
+    }
+  },
+  "privacy": {
+    "privacyMode": {
+      "title": "Privacy Mode",
+      "subtitle": "Process data locally on device"
+    },
+    "dataClear": {
+      "title": "Data Clear",
+      "subtitle": "Delete all local data and reset settings",
+      "confirmTitle": "Clear All Data",
+      "confirmMessage": "This will permanently delete all local data including settings, cache, and user preferences. This action cannot be undone.",
+      "confirmButton": "Clear Data",
+      "successMessage": "All local data has been cleared successfully."
+    }
+  },
+  "support": {
+    "help": {
+      "title": "Help & FAQ",
+      "subtitle": "Get help with AR controls"
+    },
+    "about": {
+      "title": "About",
+      "subtitle": "App version and information"
+    }
+  },
+  "version": "Holo Chat Cockpit v0.1.0",
+  "builtWith": "Powered by bypp, inc",
+  "alerts": {
+    "languageChanged": "Language Changed",
+    "languageChangedMessage": "Language set to {{language}}"
+  }
+}

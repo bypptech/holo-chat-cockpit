@@ -1,0 +1,68 @@
+{
+  "title": "コントローラー",
+  "esp32Controller": "ESP32ガチャコントローラー",
+  "quickActions": {
+    "title": "クイックアクション",
+    "testDevice": "デバイステスト"
+  },
+  "authentication": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "authRequired": "認証が必要",
+    "loginSuccessful": "ログイン成功",
+    "loginSuccessfulMessage": "Internet Identityで認証されました\nプリンシパル: {{principal}}...",
+    "loginError": "ログインエラー",
+    "loginFailed": "ログインに失敗しました",
+    "logoutConfirm": "ログアウト",
+    "logoutConfirmMessage": "Internet Identityからログアウトしてもよろしいですか？",
+    "internetIdentity": "Internet Identity",
+    "internetIdentitySubtitle": "デバイス管理のための安全な認証。",
+    "localNetwork": "ローカル",
+    "mainnet": "メインネット",
+    "localNote": "注意: ローカルネットワークは開発専用です。"
+  },
+  "esp32": {
+    "connected": "接続済み",
+    "disconnected": "未接続",
+    "deviceControl": "デバイス制御",
+    "processing": "処理中...",
+    "wait": "{{seconds}}秒待機",
+    "duration": "継続時間: 5秒",
+    "intensity": "強度: 中",
+    "success": "成功",
+    "successMessage": "デバイス操作が正常に完了しました",
+    "error": "エラー",
+    "errorMessage": "通信エラーが発生しました",
+    "authenticationRequired": "認証が必要",
+    "authenticationRequiredMessage": "最初に認証を完了してください。",
+    "authRequired": "認証が必要"
+  },
+  "capsule": {
+    "received": "カプセル受信完了！",
+    "receivedMessage": "ESP32から2つの信号を正常に受信しました",
+    "signal1": "信号1: {{data}}",
+    "signal2": "信号2: {{data}}",
+    "receivedAt": "受信時刻: {{time}}",
+    "continueOperation": "操作を続行",
+    "continue": "続行",
+    "continueMessage": "次の操作を開始します"
+  },
+  "connectedDevices": "接続済みデバイス",
+  "noDevices": {
+    "title": "制御対応デバイスなし",
+    "subtitle": "デバイスタブでコントローラー統合を有効にしてください"
+  },
+  "device": {
+    "operation": "デバイス操作",
+    "operationDescription": "認証済みデバイスを制御できます",
+    "operationButton": "デバイス操作",
+    "communicating": "通信中...",
+    "waitSeconds": "再操作まで {{seconds}}秒",
+    "operationComplete": "操作完了",
+    "operationCompleteMessage": "デバイスの操作が正常完了しました\nCanister応答: {{response}}",
+    "operationFailed": "エラー",
+    "operationFailedMessage": "デバイス制御に失敗しました: {{error}}",
+    "checkingAuth": "認証状態を確認中...",
+    "principal": "Principal: "
+  }
+}

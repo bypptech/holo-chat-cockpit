@@ -1,0 +1,34 @@
+{
+  "title": "AR Camera",
+  "subtitle": "Point at objects to detect and control them",
+  "permissions": {
+    "title": "AR Camera Access",
+    "subtitle": "This app uses your camera to detect objects and display interactive AR controls in real-time.",
+    "grant": "Grant Camera Access",
+    "features": {
+      "detection": "Real-time object detection",
+      "controls": "Interactive AR control panels",
+      "security": "Secure local processing"
+    },
+    "privacy": "Your camera data is processed locally and never sent to external servers."
+  },
+  "overlay": {
+    "scanning": "Scanning...",
+    "paused": "Scan Paused",
+    "objectsDetected": "{{count}} Objects Detected",
+    "pointAtObject": "Point at an object",
+    "tapToInteract": "Tap object to interact",
+    "webDemo": "📱 Web Demo Mode - Install on mobile for full AR experience"
+  },
+  "controls": {
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "deviceControls": "Device Controls"
+  },
+  "stats": {
+    "active": "Active",
+    "connecting": "Connecting",
+    "inactive": "Inactive"
+  }
+}

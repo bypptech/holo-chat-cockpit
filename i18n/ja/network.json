@@ -1,0 +1,54 @@
+{
+  "title": "ネットワークセンター",
+  "subtitle": "ネットワークステータスと接続管理",
+  "networkStatus": "ネットワークステータス",
+  "wifi": "WiFi",
+  "blockchain": "ブロックチェーン",
+  "bluetooth": "Bluetooth",
+  "webSocket": "WebSocket",
+  "blockchainConnection": "ブロックチェーン接続",
+  "icpConnected": "ICP接続済み",
+  "connectToIcp": "ICPに接続",
+  "connectToIcpSubtitle": "Internet Computer Protocolネットワークに接続",
+  "connectWithInternetIdentity": "Internet Identityで接続",
+  "switchNetwork": "ネットワーク切替",
+  "canisterIds": "キャニスターID",
+  "backendCanister": "バックエンドキャニスター",
+  "frontendCanister": "フロントエンドキャニスター",
+  "networkSettings": "ネットワーク設定",
+  "networkPerformance": "ネットワークパフォーマンス",
+  "wifiSignal": "WiFi信号",
+  "latency": "レイテンシ",
+  "uptime": "稼働時間",
+  "settings": {
+    "wifi": {
+      "title": "WiFi",
+      "subtitle": "WiFi接続を有効にする"
+    },
+    "bluetooth": {
+      "title": "Bluetooth",
+      "subtitle": "Bluetoothネットワーキングを有効にする"
+    },
+    "webSocket": {
+      "title": "WebSocket",
+      "subtitle": "WebSocket接続を有効にする"
+    },
+    "autoConnect": {
+      "title": "自動接続",
+      "subtitle": "既知のネットワークに自動的に接続"
+    }
+  },
+  "networks": {
+    "local": "ローカルネットワーク",
+    "testnet": "テストネット",
+    "mainnet": "メインネット"
+  },
+  "alerts": {
+    "connected": "成功",
+    "connectedMessage": "{{network}}ネットワークに接続しました",
+    "logout": "ログアウト",
+    "logoutMessage": "ICPから切断してもよろしいですか？",
+    "copied": "コピー完了",
+    "copiedMessage": "クリップボードにコピーしました"
+  }
+}

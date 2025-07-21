@@ -1,0 +1,76 @@
+{
+  "title": "設定",
+  "subtitle": "AR体験をカスタマイズ",
+  "sections": {
+    "appearance": "外観",
+    "detection": "検出",
+    "feedback": "フィードバック",
+    "privacy": "プライバシーとセキュリティ",
+    "support": "サポート"
+  },
+  "appearance": {
+    "theme": {
+      "title": "テーマ",
+      "subtitle": "現在: {{mode}}",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システム"
+    },
+    "language": {
+      "title": "言語",
+      "subtitle": "現在: {{language}}",
+      "english": "English",
+      "japanese": "日本語"
+    }
+  },
+  "detection": {
+    "autoDetection": {
+      "title": "自動検出",
+      "subtitle": "カメラ起動時に自動的にオブジェクトを検出"
+    },
+    "sensitivity": {
+      "title": "検出感度",
+      "subtitle": "オブジェクト検出の精度を調整"
+    }
+  },
+  "feedback": {
+    "notifications": {
+      "title": "通知",
+      "subtitle": "検出とインタラクションのアラートを表示"
+    },
+    "soundEffects": {
+      "title": "サウンドエフェクト",
+      "subtitle": "ARインタラクション時にサウンドを再生"
+    }
+  },
+  "privacy": {
+    "privacyMode": {
+      "title": "プライバシーモード",
+      "subtitle": "デバイス上でローカルにデータを処理"
+    },
+    "dataClear": {
+      "title": "データクリア",
+      "subtitle": "すべてのローカルデータを削除して設定をリセット",
+      "confirmTitle": "すべてのデータをクリア",
+      "confirmMessage": "設定、キャッシュ、ユーザー設定を含むすべてのローカルデータが完全に削除されます。この操作は元に戻せません。",
+      "confirmButton": "データをクリア",
+      "successMessage": "すべてのローカルデータが正常にクリアされました。"
+    }
+  },
+  "support": {
+    "help": {
+      "title": "ヘルプとFAQ",
+      "subtitle": "ARコントロールのヘルプを取得"
+    },
+    "about": {
+      "title": "について",
+      "subtitle": "アプリのバージョンと情報"
+    }
+  },
+  "version": "Holo Chat Cockpit v0.1.0",
+  "builtWith": "Powered by bypp, inc",
+  "alerts": {
+    "languageChanged": "言語が変更されました",
+    "languageChangedMessage": "言語が{{language}}に設定されました"
+  }
+}

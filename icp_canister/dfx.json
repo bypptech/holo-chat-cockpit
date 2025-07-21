@@ -1,0 +1,21 @@
+{
+  "canisters": {
+    "gacha_drive_request_canister": {
+      "main": "src/send_http_get_backend/main.mo",
+      "type": "motoko"
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "type": "custom",
+      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
