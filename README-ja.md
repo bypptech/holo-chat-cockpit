@@ -40,6 +40,10 @@ ICPプラットフォームを活用したIoTデバイスコントロールア�
    ```env
    EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA="canister-id-here"
    EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA_SECRET_TOKEN="secret-token-here"
+
+   EXPO_PUBLIC_GEMINI_API_KEY="your-gemini-api-key-here"
+   EXPO_PUBLIC_SUPABASE_URL="your-supabase-url-here"
+   EXPO_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key-here"
    ```
 
 5. **開発サーバー起動**
