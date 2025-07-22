@@ -38,6 +38,89 @@
     "subtitle": "Enable chat integration in the Devices tab",
     "description": "There are currently no devices available for chat control. Please enable chat integration for devices in the Devices tab."
   },
+  "features": {
+    "deviceControl": {
+      "name": "Devices Control",
+      "description": "Control IoT devices with simple operation words",
+      "examples": {
+        "powerOn": "power on",
+        "volume": "volume 50",
+        "temperature": "temperature 25"
+      }
+    },
+    "arGacha": {
+      "name": "AR Gacha Control",
+      "description": "Control AR gacha machine operations",
+      "examples": {
+        "gachaStart": "gacha start",
+        "capsuleReceive": "capsule receive",
+        "rewardCheck": "reward check"
+      }
+    },
+    "selectInstruction": "Please select a feature to use",
+    "deselected": "Feature deselected. Returned to normal chat mode.",
+    "operations": "Operations:",
+    "usageExample": "Usage examples:",
+    "connectedDevices": "Connected devices:",
+    "noDevices": "• No devices",
+    "hint": "Tip: Please select a feature from the cards above to enable specific commands.",
+    "deviceControlExamples": {
+      "turnOnTV": "• \"Turn on the TV\"",
+      "setTemperature": "• \"Set temperature to 25\"",
+      "setVolume": "• \"Set speaker volume to 50\"",
+      "makeBrighter": "• \"Make it brighter\""
+    },
+    "arGachaExamples": {
+      "startGacha": "• \"Start gacha\"",
+      "receiveCapsule": "• \"Receive capsule\"",
+      "checkRewards": "• \"Check rewards\""
+    },
+    "selected": "{{name}} selected.",
+    "availableOperations": "Available operations: {{operations}}"
+  },
+  "session": {
+    "networkError": "Network connection error occurred.\n\n🔄 Automatically retrying...\n\n💡 Please refresh the page or wait a moment and try again.\n\n✅ System configuration is correct (Supabase and Internet Identity are both operational)",
+    "initError": "Error occurred during session initialization.\n\nError: {{error}}\n\n✅ Environment variables are properly configured\n💡 This might be a temporary issue\n\nPlease check console logs for details.",
+    "loginRequired": "Please login with Internet Identity"
+  },
+  "ui": {
+    "subtitle": "Chat. Control. Connect. - Your conversational operator",
+    "authenticated": "Authenticated",
+    "notAuthenticated": "Not Authenticated",
+    "processing": "Processing...",
+    "placeholder": "What would you like to do?",
+    "operationComplete": "Operation Complete",
+    "operationType": "Type: {{type}}"
+  },
+  "inline": {
+    "deviceConfirmation": "Device Operation Confirmation",
+    "confidence": "Confidence: {{confidence}}%",
+    "arGachaExecution": "Execute AR Gacha",
+    "featureUnderDevelopment": "Feature under development"
+  },
+  "errors": {
+    "processing": "An error occurred while processing your message. Please check your environment variables configuration.",
+    "general": "An error occurred. Please try again.",
+    "execution": "An error occurred during execution."
+  },
+  "aiResponse": {
+    "geminiError": "Gemini API error occurred.\n\nDetails: {{error}}\n\n💡 Please check if the Gemini API key is properly configured.",
+    "deviceCommandDetected": "\n\nDevice command detected:\n• Action: {{action}}\n• Target: {{target}}\n• Confidence: {{confidence}}%{{statusInfo}}\n\nExecute this command?",
+    "deviceStatus": "\n\nCurrent {{target}} status:\n{{statusDetails}}",
+    "arGachaProcessing": "\n\nProcessing AR Gacha command...",
+    "noFeatureSelected": "\n\nTip: Please select a feature from the cards above to enable specific commands."
+  },
+  "deviceActions": {
+    "success": "✅ {{message}}",
+    "error": "❌ Error: {{message}}",
+    "cancelled": "❌ Command execution cancelled.",
+    "executing": "🎰 Executing AR Gacha Drive Operation...\n\n📡 Connecting to ICP canister...",
+    "complete": "✅ Drive operation completed successfully!\n\n📋 Canister response: {{response}}\n\n⏱️ Starting 10-second cooldown...",
+    "failed": "❌ Drive operation failed:\n\n{{error}}",
+    "cooldown": "⏱️ Cooldown... {{seconds}} seconds",
+    "ready": "🏁 Drive operation fully completed. Ready for new operations.",
+    "authRequired": "❌ Authentication required. Please login with Internet Identity."
+  },
   "database": {
     "logging": "Logging",
     "ready": "Ready",

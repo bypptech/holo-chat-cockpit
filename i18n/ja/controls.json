@@ -64,5 +64,31 @@
     "operationFailedMessage": "デバイス制御に失敗しました: {{error}}",
     "checkingAuth": "認証状態を確認中...",
     "principal": "Principal: "
+  },
+  "confirmation": {
+    "title": "コマンド実行確認",
+    "action": "アクション:",
+    "device": "デバイス:",
+    "parameters": "パラメータ:",
+    "confidence": "信頼度:",
+    "execute": "実行",
+    "actions": {
+      "power_on": "電源をオンにする",
+      "power_off": "電源をオフにする",
+      "power_toggle": "電源を切り替える",
+      "volume_up": "音量を上げる",
+      "volume_down": "音量を下げる",
+      "volume_set": "音量を設定する",
+      "temperature_set": "温度を設定する",
+      "brightness_set": "明るさを設定する",
+      "mode_change": "モードを変更する",
+      "status": "ステータスを確認する",
+      "gacha_start": "ガチャを開始する"
+    }
+  },
+  "inlinePanel": {
+    "target": "対象:",
+    "action": "アクション:",
+    "execute": "実行"
   }
 }

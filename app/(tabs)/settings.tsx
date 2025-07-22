@@ -554,21 +554,23 @@ export default function SettingsScreen() {
         colors={isDark ? ['#000428', '#004e92'] : ['#667eea', '#764ba2']}
         style={styles.gradient}
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Setting</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('settings:subtitle')}</Text>
-        </View>
-
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {settingSections.map(renderSection)}
-          
-          <View style={styles.versionInfo}>
-            <BlurView intensity={isDark ? 60 : 40} tint={isDark ? "dark" : "light"} style={styles.versionCard}>
-              <Text style={[styles.versionText, { color: colors.text }]}>{t('settings:version')}</Text>
-              <Text style={[styles.versionSubtext, { color: colors.textSecondary }]}>{t('settings:builtWith')}</Text>
-            </BlurView>
+        <View style={styles.contentWrapper}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.text }]}>Setting</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('settings:subtitle')}</Text>
           </View>
-        </ScrollView>
+
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            {settingSections.map(renderSection)}
+            
+            <View style={styles.versionInfo}>
+              <BlurView intensity={isDark ? 60 : 40} tint={isDark ? "dark" : "light"} style={styles.versionCard}>
+                <Text style={[styles.versionText, { color: colors.text }]}>{t('settings:version')}</Text>
+                <Text style={[styles.versionSubtext, { color: colors.textSecondary }]}>{t('settings:builtWith')}</Text>
+              </BlurView>
+            </View>
+          </ScrollView>
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -580,6 +582,12 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     paddingHorizontal: 20,

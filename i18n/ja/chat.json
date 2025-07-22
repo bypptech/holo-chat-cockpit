@@ -38,6 +38,89 @@
     "subtitle": "デバイスタブでチャット機能を有効にしてください",
     "description": "現在、チャットで制御できるデバイスがありません。デバイスタブでデバイスのチャット統合を有効にしてください。"
   },
+  "features": {
+    "deviceControl": {
+      "name": "デバイス制御",
+      "description": "IoTデバイスをシンプルな操作語で制御",
+      "examples": {
+        "powerOn": "power on",
+        "volume": "volume 50",
+        "temperature": "temperature 25"
+      }
+    },
+    "arGacha": {
+      "name": "ARガチャ操作",
+      "description": "ARガチャマシンの操作と制御",
+      "examples": {
+        "gachaStart": "gacha start",
+        "capsuleReceive": "capsule receive",
+        "rewardCheck": "reward check"
+      }
+    },
+    "selectInstruction": "利用する機能をチェックしてください",
+    "deselected": "機能の選択が解除されました。通常のチャットモードに戻りました。",
+    "operations": "操作語:",
+    "usageExample": "使い方の例:",
+    "connectedDevices": "接続中のデバイス:",
+    "noDevices": "• デバイスなし",
+    "hint": "ヒント: 上部の機能カードから使用したい機能を選択してください。",
+    "deviceControlExamples": {
+      "turnOnTV": "• \"テレビをつけて\"",
+      "setTemperature": "• \"エアコンを25度にして\"",
+      "setVolume": "• \"スピーカーの音量を50にして\"",
+      "makeBrighter": "• \"明るくして\""
+    },
+    "arGachaExamples": {
+      "startGacha": "• \"ガチャを開始\"",
+      "receiveCapsule": "• \"カプセルを受け取る\"",
+      "checkRewards": "• \"報酬を確認\""
+    },
+    "selected": "{{name}}が選択されました。",
+    "availableOperations": "利用可能な操作: {{operations}}"
+  },
+  "session": {
+    "networkError": "ネットワーク接続エラーが発生しました。\n\n🔄 自動的に再試行しています...\n\n💡 ページを更新するか、少し待ってから再度お試しください。\n\n✅ システム設定は正常です（Supabase、Internet Identity共に動作中）",
+    "initError": "セッションの初期化でエラーが発生しました。\n\nエラー: {{error}}\n\n✅ 環境変数は正常に設定されています\n💡 一時的な問題の可能性があります\n\n詳細はコンソールログをご確認ください。",
+    "loginRequired": "Internet Identityでログインしてください"
+  },
+  "ui": {
+    "subtitle": "シンプルに繋がる、言葉で操作する、あなたのための対話型オペレーター",
+    "authenticated": "認証済み",
+    "notAuthenticated": "未認証",
+    "processing": "処理中...",
+    "placeholder": "どんな操作をしますか？",
+    "operationComplete": "操作完了",
+    "operationType": "種類: {{type}}"
+  },
+  "inline": {
+    "deviceConfirmation": "デバイス操作の確認",
+    "confidence": "信頼度: {{confidence}}%",
+    "arGachaExecution": "ARガチャの実行",
+    "featureUnderDevelopment": "開発中の機能です"
+  },
+  "errors": {
+    "processing": "メッセージの処理中にエラーが発生しました。環境変数の設定を確認してください。",
+    "general": "エラーが発生しました。もう一度お試しください。",
+    "execution": "実行中にエラーが発生しました。"
+  },
+  "aiResponse": {
+    "geminiError": "Gemini APIエラーが発生しました。\n\n詳細: {{error}}\n\n💡 APIキーが正しく設定されているか確認してください。",
+    "deviceCommandDetected": "\n\nデバイスコマンドを検出しました:\n• アクション: {{action}}\n• 対象: {{target}}\n• 信頼度: {{confidence}}%{{statusInfo}}\n\n実行しますか？",
+    "deviceStatus": "\n\n現在の{{target}}の状態:\n{{statusDetails}}",
+    "arGachaProcessing": "\n\nARガチャコマンドを処理中...",
+    "noFeatureSelected": "\n\nヒント: 上部の機能カードから使用したい機能を選択してください。"
+  },
+  "deviceActions": {
+    "success": "✅ {{message}}",
+    "error": "❌ エラー: {{message}}",
+    "cancelled": "❌ コマンドの実行をキャンセルしました。",
+    "executing": "🎰 ARガチャドライブ操作を実行中...\n\n📡 ICPキャニスターに接続しています...",
+    "complete": "✅ ドライブ操作が完了しました！\n\n📋 キャニスター応答: {{response}}\n\n⏱️ 10秒間のクールダウンが開始されます...",
+    "failed": "❌ ドライブ操作が失敗しました:\n\n{{error}}",
+    "cooldown": "⏱️ クールダウン中... {{seconds}}秒",
+    "ready": "🏁 ドライブ操作が完全に完了しました。新しい操作を実行できます。",
+    "authRequired": "❌ 認証が必要です。Internet Identityでログインしてください。"
+  },
   "database": {
     "logging": "ログ記録中",
     "ready": "準備完了",

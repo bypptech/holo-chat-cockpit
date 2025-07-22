@@ -68,7 +68,7 @@ interface NetworkStatus {
 export default function NetworkScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useLanguage();
-  
+
   const [networkSettings, setNetworkSettings] = useState<NetworkSettings>({
     wifi: true,
     bluetooth: true,
@@ -142,7 +142,7 @@ export default function NetworkScreen() {
   const toggleSetting = (key: keyof NetworkSettings) => {
     const newValue = !networkSettings[key];
     setNetworkSettings(prev => ({ ...prev, [key]: newValue }));
-    
+
     // Show feedback to user
     const settingNames = {
       wifi: 'WiFi',
@@ -150,7 +150,7 @@ export default function NetworkScreen() {
       websocket: 'WebSocket',
       autoConnect: 'Auto Connect'
     };
-    
+
     Alert.alert(
       'Network Setting Updated',
       `${settingNames[key]} has been ${newValue ? 'enabled' : 'disabled'}`,
@@ -180,14 +180,14 @@ export default function NetworkScreen() {
   const handleICPLogin = async (network: 'local' | 'testnet' | 'ic') => {
     // Simulate authentication
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     const mockPrincipal = `rdmx6-jaaaa-aaaah-qcaaa-cai-${Date.now()}`;
     const session: ICPSession = {
       principal: mockPrincipal,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       network
     };
-    
+
     setCurrentSession(session);
     setSelectedNetwork(network);
     setNetworkStatus(prev => ({
@@ -236,7 +236,7 @@ export default function NetworkScreen() {
   // Render setting button using the same design as Settings tab
   const renderSettingButton = (item: any) => {
     const IconComponent = item.icon;
-    
+
     return (
       <TouchableOpacity
         key={item.title}
@@ -262,7 +262,7 @@ export default function NetworkScreen() {
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.settingRight}>
           {item.type === 'switch' ? (
             <Switch
@@ -284,10 +284,13 @@ export default function NetworkScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={isDark ? ['#000428', '#004e92'] : ['#667eea', '#764ba2']} style={styles.gradient}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('navigation:screens.networkCenter')}</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('network:subtitle')}</Text>
-        </View>
+        <View style={styles.contentWrapper}>
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              <Text style={[styles.title, { color: colors.text }]}>{t('navigation:screens.networkCenter')}</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('network:subtitle')}</Text>
+            </View>
+          </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Network Status Panels */}
@@ -357,7 +360,7 @@ export default function NetworkScreen() {
           {/* Blockchain Connection Management */}
           <View style={styles.blockchainSection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('network:blockchainConnection')}</Text>
-            
+
             {/* ICP Connection */}
             <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.blockchainCard}>
               <View style={styles.blockchainHeader}>
@@ -366,7 +369,7 @@ export default function NetworkScreen() {
                   <Text style={[styles.protocolBadgeText, { color: '#8B5CF6' }]}>ICP</Text>
                 </View>
               </View>
-              
+
               {currentSession ? (
                 <>
                   {/* Connected State */}
@@ -587,6 +590,7 @@ export default function NetworkScreen() {
             </BlurView>
           </View>
         </Modal>
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -598,6 +602,12 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     paddingHorizontal: 20,
@@ -621,7 +631,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'NotoSansJP-SemiBold',
     marginBottom: 16,
   },
-  
+
   // Network Status Panels
   statusSection: {
     marginBottom: 24,
@@ -903,8 +913,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     gap: 12,
   },
-  networkOptionText: {
-    fontSize: 16,
+  networkOptionText: {fontSize: 16,
     fontFamily: 'NotoSansJP-Medium',
     flex: 1,
   },

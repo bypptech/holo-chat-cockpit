@@ -1,0 +1,44 @@
+{
+  "offline": {
+    "messages": [
+      "こんにちは！申し訳ございませんが、現在Gemini APIが利用できません。新しいAPIキーを設定してください。",
+      "メッセージを受け取りました！Gemini APIの設定が完了すると、より詳細な応答ができるようになります。",
+      "お話しいただきありがとうございます。Gemini APIキーの設定をお願いします。",
+      "現在オフラインモードで動作しています。Google AI StudioでAPIキーを取得してください。"
+    ]
+  },
+  "errors": {
+    "invalidApiKey": "Gemini APIキーが無効です。正しいAPIキーを設定してください。",
+    "quotaExceeded": "APIの利用制限に達しました。後で再度お試しください。",
+    "requestBlocked": "リクエストがブロックされました。内容を変更して再試行してください。",
+    "networkError": "ネットワークエラーが発生しました。接続を確認してください。",
+    "generationError": "すみません、応答の生成中にエラーが発生しました。\\n\\nエラー詳細: {{error}}..."
+  },
+  "prompts": {
+    "deviceAnalysis": {
+      "system": "あなたはIoTデバイス制御アシスタントです。ユーザーのメッセージを分析し、IoTデバイスへのコマンドを抽出してください。",
+      "availableDevices": "利用可能なデバイス: {{devices}}",
+      "userMessage": "ユーザーメッセージ: \"{{message}}\"",
+      "examples": "一般的な日本語のデバイス操作フレーズの例:",
+      "exampleTurnOn": "\"テレビをつけて\" → power_on",
+      "exampleTurnOff": "\"エアコンを消して\" → power_off",
+      "exampleVolumeUp": "\"音量を上げて\" → volume_up",
+      "exampleTemperature": "\"温度を25度にして\" → temperature_set",
+      "exampleBrightness": "\"明るくして\" → brightness_set",
+      "exampleVolumeSet": "\"スピーカーの音量を50にして\" → volume_set",
+      "responseFormat": "以下のJSON形式で応答してください:",
+      "notes": "注意:",
+      "noteDeviceSelection": "- デバイス名は利用可能なデバイスリストから選択してください",
+      "noteTurnOn": "- \"つけて\"/\"オンにして\" → power_on",
+      "noteTurnOff": "- \"消して\"/\"オフにして\" → power_off",
+      "noteParameters": "- 数値が含まれる場合はparametersに含めてください",
+      "noteUnclear": "- コマンドが明確でない場合は hasCommand: false にしてください"
+    },
+    "chatResponse": {
+      "system": "あなたは親しみやすいIoTアシスタントです。ユーザーとの会話を自然に続けてください。",
+      "context": "コンテキスト: {{context}}",
+      "user": "ユーザー: \"{{message}}\"",
+      "instruction": "簡潔で親しみやすい日本語で応答してください。"
+    }
+  }
+}

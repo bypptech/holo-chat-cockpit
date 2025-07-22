@@ -1,0 +1,44 @@
+{
+  "offline": {
+    "messages": [
+      "Hello! I'm sorry, but Gemini API is currently unavailable. Please set up a new API key.",
+      "Message received! Once Gemini API setup is complete, I'll be able to provide more detailed responses.",
+      "Thank you for your message. Please configure your Gemini API key.",
+      "Currently running in offline mode. Please get an API key from Google AI Studio."
+    ]
+  },
+  "errors": {
+    "invalidApiKey": "Gemini API key is invalid. Please set a correct API key.",
+    "quotaExceeded": "API usage limit has been reached. Please try again later.",
+    "requestBlocked": "Request was blocked. Please modify the content and try again.",
+    "networkError": "A network error occurred. Please check your connection.",
+    "generationError": "Sorry, an error occurred during response generation.\\n\\nError details: {{error}}..."
+  },
+  "prompts": {
+    "deviceAnalysis": {
+      "system": "You are an IoT device control assistant. Analyze the user's message and extract IoT device commands.",
+      "availableDevices": "Available devices: {{devices}}",
+      "userMessage": "User message: \"{{message}}\"",
+      "examples": "Common English device operation phrases:",
+      "exampleTurnOn": "\"Turn on the TV\" → power_on",
+      "exampleTurnOff": "\"Turn off the AC\" → power_off",
+      "exampleVolumeUp": "\"Turn up the volume\" → volume_up",
+      "exampleTemperature": "\"Set temperature to 25\" → temperature_set",
+      "exampleBrightness": "\"Make it brighter\" → brightness_set",
+      "exampleVolumeSet": "\"Set speaker volume to 50\" → volume_set",
+      "responseFormat": "Please respond in the following JSON format:",
+      "notes": "Notes:",
+      "noteDeviceSelection": "- Select device name from the available devices list",
+      "noteTurnOn": "- \"turn on\"/\"switch on\" → power_on",
+      "noteTurnOff": "- \"turn off\"/\"switch off\" → power_off",
+      "noteParameters": "- Include numerical values in parameters if present",
+      "noteUnclear": "- Set hasCommand: false if command is not clear"
+    },
+    "chatResponse": {
+      "system": "You are a friendly IoT assistant. Please continue the conversation naturally with the user.",
+      "context": "Context: {{context}}",
+      "user": "User: \"{{message}}\"",
+      "instruction": "Please respond in concise and friendly English."
+    }
+  }
+}

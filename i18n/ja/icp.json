@@ -1,0 +1,20 @@
+{
+  "principalId": "Principal ID",
+  "networkInfo": "ネットワーク情報",
+  "canisterInfo": "キャニスター情報",
+  "status": {
+    "label": "ステータス",
+    "active": "✅ アクティブ",
+    "inactive": "❌ 非アクティブ",
+    "maintenance": "🔧 メンテナンス中"
+  },
+  "network": "ネットワーク",
+  "connection": {
+    "label": "接続",
+    "stable": "✅ 安定",
+    "unstable": "⚠️ 不安定",
+    "disconnected": "❌ 切断"
+  },
+  "latency": "レイテンシ",
+  "cycles": "Cycles"
+}

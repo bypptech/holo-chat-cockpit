@@ -1,13 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield, Radio, Zap, Globe, MessageCircle } from 'lucide-react-native';
+import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
 import { useChatDevice } from '@/contexts/ChatDeviceContext';
+import { analyzeUserIntent, generateAIResponse, DeviceCommand } from '@/components/services/gemini';
+import { executeDeviceCommand, getDeviceState } from '@/components/services/deviceControl';
+import DriveOperationService from '@/components/services/driveOperationService';
+// Temporarily skip Supabase imports
+// import { logChatInteraction } from '@/components/services/supabase';
+
+interface ChatSession {
+  id: string;
+  user_id: string;
+  status: string;
+  created_at: string;
+}
+import { ConfirmationPanel } from '@/components/ConfirmationPanel';
+import { InlineChatPanel } from '@/components/InlineChatPanel';
 
 interface Message {
   id: string;
@@ -15,6 +29,17 @@ interface Message {
   isUser: boolean;
   timestamp: Date;
   operationData?: any;
+  deviceCommand?: DeviceCommand;
+  confidence?: number;
+  showInlinePanel?: boolean;
+  inlinePanelData?: {
+    type: 'device' | 'icp' | 'gacha';
+    title: string;
+    subtitle?: string;
+    actionLabel?: string;
+    targetDevice?: string;
+    parameters?: Record<string, any>;
+  };
 }
 
 interface AvailableFeature {
@@ -29,53 +54,43 @@ interface AvailableFeature {
 
 export default function CCCChatScreen() {
   const { isDark, colors } = useTheme();
-  const { t, currentLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { isAuthenticated, principal } = useInternetIdentity();
   const { getChatEnabledDevices } = useChatDevice();
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingCommand, setPendingCommand] = useState<DeviceCommand | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
 
   // C.C.C. 利用可能機能
   const availableFeatures: AvailableFeature[] = [
     {
       id: 'device-control',
-      name: currentLanguage === 'ja' ? 'デバイス制御' : 'Device Control',
-      description: currentLanguage === 'ja' ? 'IoTデバイスをシンプルな操作語で制御' : 'Control IoT devices with simple operation words',
+      name: t('chat:features.deviceControl.name'),
+      description: t('chat:features.deviceControl.description'),
       operations: ['power', 'volume', 'temperature', 'mode'],
       examples: [
-        currentLanguage === 'ja' ? 'power on' : 'power on',
-        currentLanguage === 'ja' ? 'volume 50' : 'volume 50',
-        currentLanguage === 'ja' ? 'temperature 25' : 'temperature 25'
+        t('chat:features.deviceControl.examples.powerOn'),
+        t('chat:features.deviceControl.examples.volume'),
+        t('chat:features.deviceControl.examples.temperature')
       ],
       icon: Smartphone,
       color: '#4CAF50'
     },
     {
-      id: 'icp-explorer',
-      name: currentLanguage === 'ja' ? 'ICPエクスプローラー' : 'ICP Explorer',
-      description: currentLanguage === 'ja' ? 'Internet Computer ネットワーク情報の確認' : 'Check Internet Computer network information',
-      operations: ['principal', 'canister', 'network'],
-      examples: [
-        'principal info',
-        'network status',
-        'canister info'
-      ],
-      icon: Globe,
-      color: '#2196F3'
-    },
-    {
       id: 'ar-gacha',
-      name: currentLanguage === 'ja' ? 'ARガチャ操作' : 'AR Gacha Control',
-      description: currentLanguage === 'ja' ? 'ARガチャマシンの操作と制御' : 'Control AR gacha machine operations',
+      name: t('chat:features.arGacha.name'),
+      description: t('chat:features.arGacha.description'),
       operations: ['gacha', 'capsule', 'reward'],
       examples: [
-        'gacha start',
-        'capsule receive',
-        'reward check'
+        t('chat:features.arGacha.examples.gachaStart'),
+        t('chat:features.arGacha.examples.capsuleReceive'),
+        t('chat:features.arGacha.examples.rewardCheck')
       ],
       icon: SettingsIcon,
       color: '#FF9800'
@@ -85,165 +100,236 @@ export default function CCCChatScreen() {
   const connectedDevices = getChatEnabledDevices();
 
   useEffect(() => {
-    if (isAuthenticated && principal) {
-      setMessages([{
-        id: '1',
-        content: currentLanguage === 'ja' 
-          ? `こんにちは！ 操作語を入力してください\n\nPrincipal ID: ${principal.slice(0, 8)}...${principal.slice(-6)}`
-          : `Hello! Please enter operation words\n\nPrincipal ID: ${principal.slice(0, 8)}...${principal.slice(-6)}`,
-        isUser: false,
-        timestamp: new Date()
-      }]);
-    } else {
-      setMessages([{
-        id: '1',
-        content: currentLanguage === 'ja' 
-          ? 'Internet Identityでログインしてください'
-          : 'Please login with Internet Identity',
-        isUser: false,
-        timestamp: new Date()
-      }]);
+    const initializeSession = async () => {
+      if (isAuthenticated && principal) {
+        try {
+          console.log('🚀 Initializing chat session for user:', principal.slice(0, 8) + '...');
+
+          // Skip Supabase for now - use local session
+          const mockSession = {
+            id: `local-session-${Date.now()}`,
+            user_id: principal,
+            status: 'active',
+            created_at: new Date().toISOString()
+          };
+
+          console.log('✅ Local session created successfully:', mockSession.id);
+
+          setMessages([]);
+        } catch (error) {
+          console.error('❌ Failed to initialize chat session:', error);
+
+          // Check if it's a network error
+          const isNetworkError = error instanceof TypeError && 
+            (error.message.includes('fetch') || error.message.includes('network'));
+
+          if (isNetworkError) {
+            setMessages([{
+              id: '1',
+              content: t('chat:session.networkError'),
+              isUser: false,
+              timestamp: new Date()
+            }]);
+
+            // Try to retry after a delay
+            setTimeout(() => {
+              if (isAuthenticated && principal) {
+                console.log('🔄 Retrying session initialization...');
+                initializeSession();
+              }
+            }, 3000);
+          } else {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorDetails = error instanceof Error ? error.stack : JSON.stringify(error);
+            console.error('Session initialization error details:', errorDetails);
+
+            setMessages([{
+              id: '1',
+              content: t('chat:session.initError', { error: errorMessage }),
+              isUser: false,
+              timestamp: new Date()
+            }]);
+          }
+        }
+      } else {
+        setMessages([{
+          id: '1',
+          content: t('chat:session.loginRequired'),
+          isUser: false,
+          timestamp: new Date()
+        }]);
+      }
+    };
+
+    // Prevent duplicate initialization
+    if (isAuthenticated && principal && !isSessionInitialized) {
+      console.log('🎯 Initializing chat session (one-time)');
+      setIsSessionInitialized(true);
+      initializeSession();
     }
-  }, [isAuthenticated, principal, currentLanguage]);
+  }, [isAuthenticated, principal, isSessionInitialized]);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
   const handleFeatureSelect = (featureId: string) => {
-    setSelectedFeature(featureId);
-    const feature = availableFeatures.find(f => f.id === featureId);
-    if (feature) {
+    // Toggle selection if the same feature is tapped
+    if (selectedFeature === featureId) {
+      setSelectedFeature(null);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
-        content: currentLanguage === 'ja' 
-          ? `${feature.name}が選択されました。\n利用可能な操作語: ${feature.operations.join(', ')}\n\n例:\n${feature.examples.map(ex => `• ${ex}`).join('\n')}`
-          : `${feature.name} selected.\nAvailable operations: ${feature.operations.join(', ')}\n\nExamples:\n${feature.examples.map(ex => `• ${ex}`).join('\n')}`,
+        content: t('chat:features.deselected'),
         isUser: false,
         timestamp: new Date()
       }]);
+    } else {
+      setSelectedFeature(featureId);
+      const feature = availableFeatures.find(f => f.id === featureId);
+      if (feature) {
+        let exampleMessage = '';
+
+        // Provide feature-specific guidance
+        switch (featureId) {
+          case 'device-control':
+            const deviceList = connectedDevices.map(d => `• ${d.name}`).join('\n') || t('chat:features.noDevices');
+            exampleMessage = `${t('chat:features.selected', { name: feature.name })}\n\n${t('chat:features.usageExample')}\n${t('chat:features.deviceControlExamples.turnOnTV')}\n${t('chat:features.deviceControlExamples.setTemperature')}\n${t('chat:features.deviceControlExamples.setVolume')}\n${t('chat:features.deviceControlExamples.makeBrighter')}\n\n${t('chat:features.connectedDevices')}\n${deviceList}`;
+            break;
+
+          case 'ar-gacha':
+            exampleMessage = `${t('chat:features.selected', { name: feature.name })}\n\n${t('chat:features.usageExample')}\n${t('chat:features.arGachaExamples.startGacha')}\n${t('chat:features.arGachaExamples.receiveCapsule')}\n${t('chat:features.arGachaExamples.checkRewards')}`;
+            break;
+
+          default:
+            exampleMessage = `${t('chat:features.selected', { name: feature.name })}\n${t('chat:features.availableOperations', { operations: feature.operations.join(', ') })}\n\n${t('chat:features.usageExample')}\n${feature.examples.map(ex => `• ${ex}`).join('\n')}`;
+        }
+
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          content: exampleMessage,
+          isUser: false,
+          timestamp: new Date()
+        }]);
+      }
     }
   };
 
-  const processOperationWord = async (input: string): Promise<Message> => {
-    const selectedFeatureData = availableFeatures.find(f => f.id === selectedFeature);
-    
-    if (!selectedFeatureData) {
+  const processMessage = async (input: string): Promise<Message> => {
+    try {
+      const availableDeviceNames = connectedDevices.map(d => d.name);
+
+      // AI応答を生成
+      let aiResponse: string;
+      try {
+        console.log('🤖 Generating AI response for:', input.substring(0, 50) + '...');
+        aiResponse = await generateAIResponse(input);
+        console.log('✅ AI response generated successfully');
+      } catch (geminiError) {
+        console.error('❌ Gemini API error:', geminiError);
+        if (geminiError instanceof Error) {
+          console.error('Error details:', {
+            message: geminiError.message,
+            stack: geminiError.stack
+          });
+        }
+        aiResponse = t('chat:aiResponse.geminiError', { error: geminiError instanceof Error ? geminiError.message : 'Unknown error' });
+      }
+
+      // Handle feature-specific commands based on selected feature
+      let deviceCommand: DeviceCommand | null = null;
+      let confidence = 0;
+
+      if (selectedFeature) {
+        switch (selectedFeature) {
+          case 'device-control':
+            // デバイスコマンドの解析を試行
+
+            try {
+              deviceCommand = await analyzeUserIntent(input, availableDeviceNames);
+              confidence = deviceCommand?.confidence || 0;
+
+              // If we have a high-confidence device command, show inline panel
+              if (deviceCommand && confidence > 0.6) {
+                // Add device command info to the AI response
+                const deviceInfo = getDeviceState(deviceCommand.target);
+                const statusInfo = deviceInfo 
+                  ? `\n\nCurrent ${deviceCommand.target} status:\n${Object.entries(deviceInfo)
+                      .map(([key, value]) => `• ${key}: ${value}`)
+                      .join('\n')}`
+                  : '';
+
+                aiResponse = `${aiResponse}${t('chat:aiResponse.deviceCommandDetected', { 
+                  action: deviceCommand.action, 
+                  target: deviceCommand.target, 
+                  confidence: (confidence * 100).toFixed(0),
+                  statusInfo 
+                })}`;
+              }
+            } catch (error) {
+              console.warn('Device command analysis failed:', error);
+            }
+            break;
+
+
+          case 'ar-gacha':
+            // Handle AR Gacha commands
+            if (input.toLowerCase().includes('gacha') || input.toLowerCase().includes('ガチャ')) {
+              aiResponse = `${aiResponse}${t('chat:aiResponse.arGachaProcessing')}`;
+            }
+            break;
+        }
+      } else {
+        // No feature selected - prompt user to select one
+        aiResponse = `${aiResponse}${t('chat:aiResponse.noFeatureSelected')}`;
+      }
+
+      // Database logging will be handled in handleSendMessage
+
+      // Create inline panel data based on feature and commands
+      let inlinePanelData: Message['inlinePanelData'] = undefined;
+      let showInlinePanel = false;
+
+      if (selectedFeature === 'device-control' && deviceCommand && confidence > 0.6) {
+        showInlinePanel = true;
+        inlinePanelData = {
+          type: 'device',
+          title: t('chat:inline.deviceConfirmation'),
+          subtitle: t('chat:inline.confidence', { confidence: (confidence * 100).toFixed(0) }),
+          actionLabel: deviceCommand.action,
+          targetDevice: deviceCommand.target,
+          parameters: deviceCommand.parameters
+        };
+      } else if (selectedFeature === 'ar-gacha') {
+        if (input.toLowerCase().includes('gacha') || input.toLowerCase().includes('ガチャ')) {
+          showInlinePanel = true;
+          inlinePanelData = {
+            type: 'gacha',
+            title: t('chat:inline.arGachaExecution'),
+            subtitle: t('chat:inline.featureUnderDevelopment'),
+            actionLabel: 'gacha_start',
+          };
+        }
+      }
+
       return {
         id: Date.now().toString(),
-        content: currentLanguage === 'ja' 
-          ? '機能を選択してください'
-          : 'Please select a feature',
+        content: aiResponse,
+        isUser: false,
+        timestamp: new Date(),
+        deviceCommand: selectedFeature === 'device-control' && deviceCommand ? deviceCommand : undefined,
+        confidence: selectedFeature === 'device-control' ? confidence : 0,
+        showInlinePanel,
+        inlinePanelData
+      };
+    } catch (error) {
+      console.error('Error processing message:', error);
+      return {
+        id: Date.now().toString(),
+        content: t('chat:errors.processing'),
         isUser: false,
         timestamp: new Date()
       };
     }
-
-    // デバイス制御の処理
-    if (selectedFeature === 'device-control') {
-      if (input.startsWith('power')) {
-        const action = input.split(' ')[1] || 'toggle';
-        return {
-          id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? `電源を${action === 'on' ? 'オン' : action === 'off' ? 'オフ' : '切り替え'}しました`
-            : `Power ${action === 'on' ? 'turned on' : action === 'off' ? 'turned off' : 'toggled'}`,
-          isUser: false,
-          timestamp: new Date(),
-          operationData: { type: 'power', action, devices: connectedDevices.length }
-        };
-      }
-      
-      if (input.startsWith('volume')) {
-        const level = input.split(' ')[1] || '50';
-        return {
-          id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? `音量を${level}に設定しました`
-            : `Volume set to ${level}`,
-          isUser: false,
-          timestamp: new Date(),
-          operationData: { type: 'volume', level, devices: connectedDevices.length }
-        };
-      }
-
-      if (input.startsWith('temperature')) {
-        const temp = input.split(' ')[1] || '25';
-        return {
-          id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? `温度を${temp}°Cに設定しました`
-            : `Temperature set to ${temp}°C`,
-          isUser: false,
-          timestamp: new Date(),
-          operationData: { type: 'temperature', value: temp, devices: connectedDevices.length }
-        };
-      }
-    }
-
-    // ICP Explorer の処理
-    if (selectedFeature === 'icp-explorer') {
-      if (input.startsWith('principal')) {
-        return {
-          id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? `Principal ID: ${principal}\n\n✅ Internet Identity認証済み\n🌐 ICPネットワーク接続中`
-            : `Principal ID: ${principal}\n\n✅ Internet Identity authenticated\n🌐 Connected to ICP network`,
-          isUser: false,
-          timestamp: new Date(),
-          operationData: { type: 'principal', id: principal }
-        };
-      }
-
-      if (input.startsWith('network')) {
-        return {
-          id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? '🌐 ICPネットワーク状態:\n• ステータス: オンライン\n• レイテンシ: ~200ms\n• ノード数: 接続中'
-            : '🌐 ICP Network Status:\n• Status: Online\n• Latency: ~200ms\n• Nodes: Connected',
-          isUser: false,
-          timestamp: new Date(),
-          operationData: { type: 'network', status: 'online' }
-        };
-      }
-    }
-
-    // ARガチャの処理
-    if (selectedFeature === 'ar-gacha') {
-      if (input.startsWith('gacha')) {
-        return {
-          id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? '🎰 ガチャを開始しました！\n\nESP32に信号を送信中...\n📱 ARカメラでガチャマシンを確認してください'
-            : '🎰 Gacha started!\n\nSending signal to ESP32...\n📱 Check gacha machine with AR camera',
-          isUser: false,
-          timestamp: new Date(),
-          operationData: { type: 'gacha', action: 'start', esp32: true }
-        };
-      }
-
-      if (input.startsWith('capsule')) {
-        return {
-          id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? '🎁 カプセルを受信しました！\n\n✨ レアアイテムが当たりました\n📦 インベントリに追加されました'
-            : '🎁 Capsule received!\n\n✨ Rare item obtained\n📦 Added to inventory',
-          isUser: false,
-          timestamp: new Date(),
-          operationData: { type: 'capsule', received: true, item: 'rare' }
-        };
-      }
-    }
-
-    // 認識できない操作語
-    return {
-      id: Date.now().toString(),
-      content: currentLanguage === 'ja' 
-        ? `操作語「${input}」は認識できません。\n\n利用可能な操作語:\n${selectedFeatureData.operations.map(op => `• ${op}`).join('\n')}`
-        : `Operation word "${input}" not recognized.\n\nAvailable operations:\n${selectedFeatureData.operations.map(op => `• ${op}`).join('\n')}`,
-      isUser: false,
-      timestamp: new Date()
-    };
   };
 
   const handleSendMessage = async () => {
@@ -264,30 +350,28 @@ export default function CCCChatScreen() {
     // 思考中メッセージ
     const thinkingMessage: Message = {
       id: (Date.now() + 1).toString(),
-      content: currentLanguage === 'ja' ? '処理中...' : 'Processing...',
+      content: t('chat:ui.processing'),
       isUser: false,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, thinkingMessage]);
 
     try {
-      // 操作語の処理
-      const responseMessage = await processOperationWord(currentInput);
-      
+      // AIによるメッセージ処理
+      const responseMessage = await processMessage(currentInput);
+
       setMessages(prev => [
         ...prev.slice(0, prev.length - 1),
         responseMessage
       ]);
 
     } catch (error) {
-      console.error('Operation processing error:', error);
+      console.error('Message processing error:', error);
       setMessages(prev => [
         ...prev.slice(0, prev.length - 1),
         {
           id: Date.now().toString(),
-          content: currentLanguage === 'ja' 
-            ? 'エラーが発生しました。もう一度お試しください。'
-            : 'An error occurred. Please try again.',
+          content: t('chat:errors.general'),
           isUser: false,
           timestamp: new Date()
         }
@@ -307,7 +391,7 @@ export default function CCCChatScreen() {
           <Bot size={16} color={colors.primary} />
         </View>
       )}
-      
+
       <View style={styles.messageContent}>
         <BlurView 
           intensity={isDark ? 60 : 40} 
@@ -328,28 +412,40 @@ export default function CCCChatScreen() {
           ]}>
             {message.content}
           </Text>
-          
+
           {message.operationData && (
             <View style={[styles.operationData, { borderColor: colors.success + '30' }]}>
               <Text style={[styles.operationLabel, { color: colors.success }]}>
-                {currentLanguage === 'ja' ? '操作完了' : 'Operation Complete'}
+                {t('chat:ui.operationComplete')}
               </Text>
               <Text style={[styles.operationDetails, { color: colors.textSecondary }]}>
-                {currentLanguage === 'ja' 
-                  ? `種類: ${message.operationData.type}` 
-                  : `Type: ${message.operationData.type}`}
+                {t('chat:ui.operationType', { type: message.operationData.type })}
               </Text>
             </View>
           )}
-          
+
           <View style={styles.messageFooter}>
             <Text style={[styles.timestamp, { color: colors.textSecondary }]}>
               {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </View>
         </BlurView>
+
+        {/* Inline Panel */}
+        {message.showInlinePanel && message.inlinePanelData && (
+          <InlineChatPanel
+            title={message.inlinePanelData.title}
+            subtitle={message.inlinePanelData.subtitle}
+            actionLabel={message.inlinePanelData.actionLabel}
+            targetDevice={message.inlinePanelData.targetDevice}
+            parameters={message.inlinePanelData.parameters}
+            type={message.inlinePanelData.type}
+            onConfirm={() => handleInlinePanelConfirm(message)}
+            onCancel={() => handleInlinePanelCancel(message)}
+          />
+        )}
       </View>
-      
+
       {message.isUser && (
         <View style={[styles.userAvatar, { backgroundColor: colors.accent + '30' }]}>
           <User size={16} color={colors.accent} />
@@ -361,14 +457,18 @@ export default function CCCChatScreen() {
   const renderFeatureCard = (feature: AvailableFeature) => {
     const IconComponent = feature.icon;
     const isSelected = selectedFeature === feature.id;
-    
+
     return (
       <TouchableOpacity
         key={feature.id}
         style={[
           styles.featureCard,
-          isSelected && { borderColor: feature.color },
-          { backgroundColor: colors.surface + '80' }
+          isSelected && { 
+            borderColor: feature.color,
+            borderWidth: 2,
+            backgroundColor: feature.color + '10'
+          },
+          !isSelected && { backgroundColor: colors.surface + '80' }
         ]}
         onPress={() => handleFeatureSelect(feature.id)}
       >
@@ -383,15 +483,15 @@ export default function CCCChatScreen() {
               </View>
             )}
           </View>
-          
+
           <Text style={[styles.featureName, { color: colors.text }]}>{feature.name}</Text>
           <Text style={[styles.featureDescription, { color: colors.textSecondary }]}>
             {feature.description}
           </Text>
-          
+
           <View style={styles.operationsContainer}>
             <Text style={[styles.operationsLabel, { color: colors.primary }]}>
-              {currentLanguage === 'ja' ? '操作語:' : 'Operations:'}
+              {t('chat:features.operations')}
             </Text>
             <Text style={[styles.operationsList, { color: colors.textSecondary }]}>
               {feature.operations.join(', ')}
@@ -402,6 +502,341 @@ export default function CCCChatScreen() {
     );
   };
 
+  const handleInlinePanelConfirm = async (message: Message) => {
+    if (!message.inlinePanelData || !isAuthenticated) return;
+
+    try {
+      let executionResult: any = null;
+      let executionMessage: Message;
+
+      // Handle different panel types
+      switch (message.inlinePanelData.type) {
+        case 'device':
+          if (message.deviceCommand) {
+            executionResult = await executeDeviceCommand(message.deviceCommand);
+
+            if (executionResult.success) {
+              const stateInfo = executionResult.data
+                ? `\n\n📊 Updated device state:\n${Object.entries(executionResult.data)
+                    .map(([key, value]) => `• ${key}: ${value}`)
+                    .join('\n')}`
+                : '';
+
+              executionMessage = {
+                id: Date.now().toString(),
+                content: t('chat:deviceActions.success', { message: `${executionResult.message}${stateInfo}` }),
+                isUser: false,
+                timestamp: new Date(),
+                operationData: { 
+                  type: message.deviceCommand.action, 
+                  target: message.deviceCommand.target,
+                  executed: true,
+                  result: executionResult.data
+                }
+              };
+            } else {
+              executionMessage = {
+                id: Date.now().toString(),
+                content: t('chat:deviceActions.error', { message: executionResult.message }),
+                isUser: false,
+                timestamp: new Date(),
+                operationData: { 
+                  type: message.deviceCommand.action, 
+                  target: message.deviceCommand.target,
+                  executed: false,
+                  error: executionResult.error
+                }
+              };
+            }
+          }
+          break;
+
+
+        case 'gacha':
+          // Execute Drive Operation using the same logic as Touch UI
+          const driveService = DriveOperationService.getInstance();
+          const token = process.env.EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA_SECRET_TOKEN || '';
+
+          if (!principal) {
+            executionMessage = {
+              id: Date.now().toString(),
+              content: t('chat:deviceActions.authRequired'),
+              isUser: false,
+              timestamp: new Date(),
+              operationData: { 
+                type: 'gacha',
+                executed: false,
+                error: 'NOT_AUTHENTICATED'
+              }
+            };
+            break;
+          }
+
+          try {
+
+            // Show initial execution message
+            const initialMessage: Message = {
+              id: Date.now().toString(),
+              content: t('chat:deviceActions.executing'),
+              isUser: false,
+              timestamp: new Date(),
+              operationData: { 
+                type: 'gacha_drive',
+                executed: true,
+                inProgress: true
+              }
+            };
+
+            // Add initial message immediately
+            setMessages(prev => {
+              const updatedMessages = prev.map(msg => 
+                msg.id === message.id 
+                  ? { ...msg, showInlinePanel: false } 
+                  : msg
+              );
+              return [...updatedMessages, initialMessage];
+            });
+
+            // Execute drive operation
+            await driveService.executeDriveOperation(
+              token,
+              {
+                onSuccess: (canisterResponse: string) => {
+                  const successMessage: Message = {
+                    id: Date.now().toString(),
+                    content: t('chat:deviceActions.complete', { response: canisterResponse }),
+                    isUser: false,
+                    timestamp: new Date(),
+                    operationData: { 
+                      type: 'gacha_drive_success',
+                      executed: true,
+                      canisterResponse
+                    }
+                  };
+                  setMessages(prev => [...prev, successMessage]);
+                },
+                onError: (error: string) => {
+                  const errorMessage: Message = {
+                    id: Date.now().toString(),
+                    content: t('chat:deviceActions.failed', { error }),
+                    isUser: false,
+                    timestamp: new Date(),
+                    operationData: { 
+                      type: 'gacha_drive_error',
+                      executed: false,
+                      error
+                    }
+                  };
+                  setMessages(prev => [...prev, errorMessage]);
+                },
+                onCountdownUpdate: (seconds: number) => {
+                  if (seconds > 0) {
+                    const countdownMessage: Message = {
+                      id: `countdown-${Date.now()}`,
+                      content: t('chat:deviceActions.cooldown', { seconds }),
+                      isUser: false,
+                      timestamp: new Date(),
+                      operationData: { 
+                        type: 'gacha_countdown',
+                        countdown: seconds
+                      }
+                    };
+                    setMessages(prev => {
+                      // Replace previous countdown message or add new one
+                      const withoutCountdown = prev.filter(msg => !msg.operationData?.type?.includes('countdown'));
+                      return [...withoutCountdown, countdownMessage];
+                    });
+                  }
+                },
+                onComplete: () => {
+                  const completeMessage: Message = {
+                    id: Date.now().toString(),
+                    content: t('chat:deviceActions.ready'),
+                    isUser: false,
+                    timestamp: new Date(),
+                    operationData: { 
+                      type: 'gacha_complete',
+                      executed: true
+                    }
+                  };
+                  setMessages(prev => {
+                    // Remove countdown messages and add completion
+                    const withoutCountdown = prev.filter(msg => !msg.operationData?.type?.includes('countdown'));
+                    return [...withoutCountdown, completeMessage];
+                  });
+                }
+              }
+            );
+
+            // Don't set executionMessage here as it's handled by callbacks
+            return;
+
+          } catch (error) {
+            executionMessage = {
+              id: Date.now().toString(),
+              content: t('chat:deviceActions.failed', { error: error instanceof Error ? error.message : 'Unknown error' }),
+              isUser: false,
+              timestamp: new Date(),
+              operationData: { 
+                type: 'gacha_drive_error',
+                executed: false,
+                error: error instanceof Error ? error.message : 'Unknown error'
+              }
+            };
+          }
+          break;
+
+        default:
+          return;
+      }
+
+      // Remove the inline panel from the original message and add the execution result
+      setMessages(prev => {
+        const updatedMessages = prev.map(msg => 
+          msg.id === message.id 
+            ? { ...msg, showInlinePanel: false } 
+            : msg
+        );
+        return [...updatedMessages, executionMessage!];
+      });
+
+    } catch (error) {
+      console.error('Error executing inline panel command:', error);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: t('chat:errors.execution'),
+        isUser: false,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => {
+        const updatedMessages = prev.map(msg => 
+          msg.id === message.id 
+            ? { ...msg, showInlinePanel: false } 
+            : msg
+        );
+        return [...updatedMessages, errorMessage];
+      });
+    }
+  };
+
+  const handleInlinePanelCancel = (message: Message) => {
+    // Remove the inline panel from the message
+    setMessages(prev => prev.map(msg => 
+      msg.id === message.id 
+        ? { ...msg, showInlinePanel: false } 
+        : msg
+    ));
+
+    // Add a cancellation message
+    const cancelMessage: Message = {
+      id: Date.now().toString(),
+      content: t('chat:deviceActions.cancelled'),
+      isUser: false,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, cancelMessage]);
+  };
+
+  const handleConfirmCommand = async () => {
+    if (!pendingCommand || !principal) return;
+
+    setShowConfirmation(false);
+
+    try {
+      // Execute the device command
+      const result = await executeDeviceCommand(pendingCommand);
+
+      console.log('🎮 Device command executed:', {
+        action: pendingCommand.action,
+        target: pendingCommand.target,
+        parameters: pendingCommand.parameters,
+        result: result
+      });
+
+      // Create execution message based on result
+      let executionMessage: Message;
+
+      if (result.success) {
+        // Success message with device state info
+        const deviceState = getDeviceState(pendingCommand.target);
+        const stateInfo = deviceState && result.data
+          ? `\n\n📊 Updated device state:\n${Object.entries(result.data)
+              .map(([key, value]) => `• ${key}: ${value}`)
+              .join('\n')}`
+          : '';
+
+        executionMessage = {
+          id: Date.now().toString(),
+          content: t('chat:deviceActions.success', { message: `${result.message}${stateInfo}` }),
+          isUser: false,
+          timestamp: new Date(),
+          operationData: { 
+            type: pendingCommand.action, 
+            target: pendingCommand.target,
+            executed: true,
+            result: result.data
+          }
+        };
+      } else {
+        // Error message
+        executionMessage = {
+          id: Date.now().toString(),
+          content: t('chat:deviceActions.error', { message: `${result.message}\n\nError code: ${result.error}` }),
+          isUser: false,
+          timestamp: new Date(),
+          operationData: { 
+            type: pendingCommand.action, 
+            target: pendingCommand.target,
+            executed: false,
+            error: result.error
+          }
+        };
+      }
+
+      setMessages(prev => [...prev, executionMessage]);
+
+    } catch (error) {
+      console.error('Error executing command:', error);
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        content: t('chat:errors.execution'),
+        isUser: false,
+        timestamp: new Date()
+      }]);
+    }
+
+    setPendingCommand(null);
+  };
+
+  const handleCancelCommand = async () => {
+    if (!pendingCommand || !principal) return;
+
+    setShowConfirmation(false);
+
+    try {      // Skip Supabase device action recording for now
+      console.log('❌ Device command cancelled:', {
+        action: pendingCommand.action,
+        target: pendingCommand.target
+      });
+
+      const cancelMessage: Message = {
+        id: Date.now().toString(),
+        content: t('chat:deviceActions.cancelled'),
+        isUser: false,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, cancelMessage]);
+
+    } catch (error) {
+      console.error('Error logging cancellation:', error);
+    }
+
+    setPendingCommand(null);
+  };
+
   const styles = createStyles(colors, isDark);
 
   return (
@@ -410,41 +845,38 @@ export default function CCCChatScreen() {
         colors={isDark ? ['#000428', '#004e92'] : ['#667eea', '#764ba2']}
         style={styles.gradient}
       >
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={[styles.title, { color: colors.text }]}>C.C.C.</Text>
+        <View style={styles.contentWrapper}>
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+            <Text style={[styles.title, { color: colors.text }]}>Chat</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              {currentLanguage === 'ja' 
-                ? 'シンプルに繋がる、言葉で操作する、あなたのための対話型オペレーター'
-                : 'Chat. Control. Connect. - Your conversational operator'}
+              {t('chat:ui.subtitle')}
             </Text>
           </View>
-          
-          {/* 認証状態 */}
+
           <View style={styles.authStatus}>
             {isAuthenticated ? (
               <View style={[styles.authBadge, { backgroundColor: colors.success + '20' }]}>
                 <Shield size={12} color={colors.success} />
                 <Text style={[styles.authText, { color: colors.success }]}>
-                  {currentLanguage === 'ja' ? '認証済み' : 'Authenticated'}
+                  {t('chat:ui.authenticated')}
                 </Text>
               </View>
             ) : (
               <View style={[styles.authBadge, { backgroundColor: colors.warning + '20' }]}>
                 <Shield size={12} color={colors.warning} />
                 <Text style={[styles.authText, { color: colors.warning }]}>
-                  {currentLanguage === 'ja' ? '未認証' : 'Not Authenticated'}
+                  {t('chat:ui.notAuthenticated')}
                 </Text>
               </View>
             )}
           </View>
         </View>
 
-        {/* 機能選択エリア */}
-        {!selectedFeature && isAuthenticated && (
+        {isAuthenticated && (
           <View style={styles.featuresSection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {currentLanguage === 'ja' ? '利用する機能をチェックしてください' : 'Please select a feature to use'}
+              {t('chat:features.selectInstruction')}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuresScroll}>
               {availableFeatures.map(renderFeatureCard)}
@@ -452,27 +884,6 @@ export default function CCCChatScreen() {
           </View>
         )}
 
-        {/* 選択された機能の表示 */}
-        {selectedFeature && (
-          <View style={styles.selectedFeatureSection}>
-            <View style={[styles.selectedFeatureCard, { backgroundColor: colors.primary + '20' }]}>
-              <Text style={[styles.selectedFeatureText, { color: colors.primary }]}>
-                {currentLanguage === 'ja' ? '選択中の機能: ' : 'Selected Feature: '}
-                {availableFeatures.find(f => f.id === selectedFeature)?.name}
-              </Text>
-              <TouchableOpacity 
-                style={styles.changeFeatureButton}
-                onPress={() => setSelectedFeature(null)}
-              >
-                <Text style={[styles.changeFeatureText, { color: colors.primary }]}>
-                  {currentLanguage === 'ja' ? '変更' : 'Change'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* チャットエリア */}
         <View style={styles.chatContainer}>
           <ScrollView 
             ref={scrollViewRef}
@@ -480,7 +891,7 @@ export default function CCCChatScreen() {
             showsVerticalScrollIndicator={false}
           >
             {messages.map(renderMessage)}
-            
+
             {isLoading && (
               <View style={styles.typingIndicator}>
                 <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.typingBlur}>
@@ -490,27 +901,26 @@ export default function CCCChatScreen() {
                     <View style={[styles.dot, styles.dot3, { backgroundColor: colors.primary }]} />
                   </View>
                   <Text style={[styles.typingText, { color: colors.textSecondary }]}>
-                    {currentLanguage === 'ja' ? '処理中...' : 'Processing...'}
+                    {t('chat:ui.processing')}
                   </Text>
                 </BlurView>
               </View>
             )}
           </ScrollView>
 
-          {/* 入力エリア */}
           <BlurView intensity={isDark ? 90 : 70} tint={isDark ? "dark" : "light"} style={styles.inputContainer}>
             <TextInput
               style={[styles.textInput, { color: colors.text }]}
               value={inputText}
               onChangeText={setInputText}
-              placeholder={currentLanguage === 'ja' ? '操作語を入力...' : 'Enter operation word...'}
+              placeholder={t('chat:ui.placeholder')}
               placeholderTextColor={colors.textSecondary}
               multiline
               maxLength={100}
               onSubmitEditing={handleSendMessage}
               editable={isAuthenticated}
             />
-            
+
             <TouchableOpacity 
               style={[
                 styles.sendButton, 
@@ -525,6 +935,14 @@ export default function CCCChatScreen() {
             </TouchableOpacity>
           </BlurView>
         </View>
+
+        <ConfirmationPanel
+          visible={showConfirmation}
+          command={pendingCommand}
+          onConfirm={handleConfirmCommand}
+          onCancel={handleCancelCommand}
+        />
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -536,6 +954,12 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     paddingHorizontal: 20,
@@ -587,7 +1011,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     width: 200,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'transparent',
   },
   featureBlur: {
@@ -777,11 +1201,15 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   inputContainer: {
     borderRadius: 12,
-    padding: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
     marginBottom: 20,
+    marginLeft: 16,
   },
   textInput: {
     flex: 1,
@@ -789,13 +1217,20 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'NotoSansJP-Regular',
     maxHeight: 80,
     paddingVertical: 8,
+    paddingLeft: 16,
+    paddingRight: 8,
   },
-  sendButton: {
+  sendButton:{
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
 });

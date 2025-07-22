@@ -64,5 +64,31 @@
     "operationFailedMessage": "Device control failed: {{error}}",
     "checkingAuth": "Checking authentication status...",
     "principal": "Principal: "
+  },
+  "confirmation": {
+    "title": "Confirm Command",
+    "action": "Action:",
+    "device": "Device:",
+    "parameters": "Parameters:",
+    "confidence": "Confidence:",
+    "execute": "Execute",
+    "actions": {
+      "power_on": "Turn on power",
+      "power_off": "Turn off power",
+      "power_toggle": "Toggle power",
+      "volume_up": "Increase volume",
+      "volume_down": "Decrease volume",
+      "volume_set": "Set volume",
+      "temperature_set": "Set temperature",
+      "brightness_set": "Set brightness",
+      "mode_change": "Change mode",
+      "status": "Check status",
+      "gacha_start": "Start gacha"
+    }
+  },
+  "inlinePanel": {
+    "target": "Target:",
+    "action": "Action:",
+    "execute": "Execute"
   }
 }

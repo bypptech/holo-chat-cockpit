@@ -16,23 +16,68 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t, i18n } = useTranslation();
   const [isReady, setIsReady] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
+  const [currentLanguage, setCurrentLanguage] = useState('en'); // Default fallback
 
   useEffect(() => {
+    let isMounted = true;
+    let initTimeout: NodeJS.Timeout;
+
     const initializeLanguage = async () => {
       try {
+        // Set a timeout to ensure we don't wait forever
+        initTimeout = setTimeout(() => {
+          if (isMounted) {
+            console.warn('i18n initialization timeout, proceeding with current language');
+            setCurrentLanguage(getCurrentLanguage());
+            setIsReady(true);
+          }
+        }, 3000);
+
         // Wait for i18n to be ready
-        await i18n.loadNamespaces(['common', 'navigation', 'camera', 'chat', 'devices', 'controls', 'network', 'settings']);
-        setCurrentLanguage(getCurrentLanguage());
-        setIsReady(true);
+        if (i18n.isInitialized) {
+          // Try to load additional namespaces, but don't block on failure
+          try {
+            await i18n.loadNamespaces(['common', 'navigation', 'camera', 'chat', 'devices', 'controls', 'network', 'settings', 'auth', 'ar']);
+          } catch (nsError) {
+            console.warn('Some namespaces failed to load:', nsError);
+          }
+          
+          if (isMounted) {
+            clearTimeout(initTimeout);
+            setCurrentLanguage(getCurrentLanguage());
+            setIsReady(true);
+          }
+        } else {
+          // Wait for i18n to initialize
+          const handleInitialized = () => {
+            if (isMounted) {
+              clearTimeout(initTimeout);
+              setCurrentLanguage(getCurrentLanguage());
+              setIsReady(true);
+            }
+            i18n.off('initialized', handleInitialized);
+          };
+          
+          i18n.on('initialized', handleInitialized);
+        }
       } catch (error) {
         console.error('Failed to initialize language:', error);
-        setIsReady(true); // Set ready even on error to prevent infinite loading
+        if (isMounted) {
+          clearTimeout(initTimeout);
+          setIsReady(true);
+        }
       }
     };
 
     initializeLanguage();
-  }, [i18n]);
+
+    return () => {
+      isMounted = false;
+      if (initTimeout) {
+        clearTimeout(initTimeout);
+      }
+    };
+  }, []);
 
   const handleLanguageChange = async (language: string) => {
     try {

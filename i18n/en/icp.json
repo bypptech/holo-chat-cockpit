@@ -1,0 +1,20 @@
+{
+  "principalId": "Principal ID",
+  "networkInfo": "Network Information",
+  "canisterInfo": "Canister Information",
+  "status": {
+    "label": "Status",
+    "active": "✅ Active",
+    "inactive": "❌ Inactive",
+    "maintenance": "🔧 Under Maintenance"
+  },
+  "network": "Network",
+  "connection": {
+    "label": "Connection",
+    "stable": "✅ Stable",
+    "unstable": "⚠️ Unstable",
+    "disconnected": "❌ Disconnected"
+  },
+  "latency": "Latency",
+  "cycles": "Cycles"
+}

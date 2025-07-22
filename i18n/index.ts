@@ -14,6 +14,8 @@ import enNetwork from './en/network.json';
 import enSettings from './en/settings.json';
 import enAuth from './en/auth.json';
 import enAr from './en/ar.json';
+import enIcp from './en/icp.json';
+import enAi from './en/ai.json';
 
 import jaCommon from './ja/common.json';
 import jaNavigation from './ja/navigation.json';
@@ -25,13 +27,28 @@ import jaNetwork from './ja/network.json';
 import jaSettings from './ja/settings.json';
 import jaAuth from './ja/auth.json';
 import jaAr from './ja/ar.json';
+import jaIcp from './ja/icp.json';
+import jaAi from './ja/ai.json';
 
 // Get device locale
 const getDeviceLocale = (): string => {
-  if (Platform.OS === 'web') {
-    return navigator.language.split('-')[0] || 'en';
+  try {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      return navigator.language.split('-')[0];
+    }
+    // Check for Expo Localization
+    if (typeof Localization !== 'undefined' && Localization.locale) {
+      return Localization.locale.split('-')[0];
+    }
+    // Fallback for Node.js/server environment
+    if (typeof process !== 'undefined' && process.env && process.env.LANG) {
+      return process.env.LANG.split('.')[0].split('_')[0];
+    }
+  } catch (error) {
+    console.error('Error getting device locale:', error);
   }
-  return Localization.locale.split('-')[0] || 'en';
+  return 'en';
 };
 
 // Supported languages
@@ -44,16 +61,24 @@ const getFallbackLocale = (locale: string): string => {
 
 // Get stored language preference
 const getStoredLanguage = (): string | null => {
-  if (Platform.OS === 'web') {
-    return localStorage.getItem('language');
+  try {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      return localStorage.getItem('language');
+    }
+  } catch (error) {
+    console.warn('Failed to get stored language:', error);
   }
   return null; // For native, we'll use AsyncStorage later if needed
 };
 
 // Store language preference
 export const storeLanguage = (language: string): void => {
-  if (Platform.OS === 'web') {
-    localStorage.setItem('language', language);
+  try {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem('language', language);
+    }
+  } catch (error) {
+    console.warn('Failed to store language:', error);
   }
   // For native, implement AsyncStorage storage if needed
 };
@@ -83,7 +108,9 @@ const initI18n = async () => {
         'network',
         'settings',
         'auth',
-        'ar'
+        'ar',
+        'icp',
+        'ai'
       ],
 
       // Resources
@@ -98,7 +125,9 @@ const initI18n = async () => {
           network: enNetwork,
           settings: enSettings,
           auth: enAuth,
-          ar: enAr
+          ar: enAr,
+          icp: enIcp,
+          ai: enAi
         },
         ja: {
           common: jaCommon,
@@ -110,7 +139,9 @@ const initI18n = async () => {
           network: jaNetwork,
           settings: jaSettings,
           auth: jaAuth,
-          ar: jaAr
+          ar: jaAr,
+          icp: jaIcp,
+          ai: jaAi
         },
       },
 
@@ -161,7 +192,35 @@ export const getSupportedLanguages = () => {
   }));
 };
 
-// Initialize and export
-initI18n();
+// Initialize conditionally to prevent SSR issues
+if (typeof window !== 'undefined') {
+  initI18n();
+} else {
+  // For SSR, initialize synchronously with minimal config
+  i18n
+    .use(initReactI18next)
+    .init({
+      lng: 'en',
+      fallbackLng: 'en',
+      debug: false,
+      defaultNS: 'common',
+      ns: ['common'],
+      resources: {
+        en: {
+          common: enCommon
+        },
+        ja: {
+          common: jaCommon
+        }
+      },
+      interpolation: {
+        escapeValue: false,
+      },
+      react: {
+        useSuspense: false,
+      },
+      compatibilityJSON: 'v3',
+    });
+}
 
 export default i18n;
