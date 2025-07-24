@@ -19,7 +19,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { MultiAuth } from '@/components/auth/MultiAuth';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
-
+import PaymentOperationService from '@/components/services/paymentOperationService';
 
 interface ICPSession {
   principal: string;
@@ -50,10 +50,13 @@ export default function ControllerScreen() {
   const [selectedNetwork, setSelectedNetwork] = useState<'local' | 'testnet' | 'ic'>('local');
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [balanceCurrency, setBalanceCurrency] = useState<'ICP' | 'ckUSDC'>('ICP');
+  const [balance, setBalance] = useState('');
   const [showBalancePicker, setShowBalancePicker] = useState(false);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [gasFee, setGasFee] = useState('');
+
+  const paymentService = PaymentOperationService.getInstance();
 
   // Calculate total amount
   const totalAmount = (parseFloat(transferAmount || '0') + parseFloat(gasFee || '0')).toFixed(2);
@@ -101,6 +104,23 @@ export default function ControllerScreen() {
       setConnectionStatus(prev => ({ ...prev, icp: false, esp32: false }));
     }
   }, [icpAuthenticated, icpPrincipal, userPrincipal, selectedNetwork]);
+
+  // Update balance
+  useEffect(() => {
+    const currency = balanceCurrency;
+    setGasFee(paymentService.getFee(currency));
+    setBalance("");
+    if (icpAuthenticated && userPrincipal) {
+      new Promise(async ()=>{
+        const result = await paymentService.getBalance(currency);
+        if (result.success && balanceCurrency == currency) {
+          setBalance(result.balance!);
+        }
+      }).catch(()=>{
+        // TODO error handling
+      });
+    }
+  }, [icpAuthenticated, userPrincipal, selectedNetwork, balanceCurrency]);
 
   // Responsive breakpoints
   const isTablet = screenDimensions.width >= 768;
@@ -231,7 +251,7 @@ export default function ControllerScreen() {
                   <View style={[styles.balanceSection, { zIndex: 10000 }]}>
                     <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>{t('index:balance')}</Text>
                     <View style={[styles.balanceRow, { zIndex: 10001 }]}>
-                      <Text style={[styles.balanceAmount, { color: colors.text }]}>0.00</Text>
+                      <Text style={[styles.balanceAmount, { color: colors.text }]}>{balance}</Text>
                       <View style={[styles.currencyDropdown, { backgroundColor: colors.primary + '20', borderColor: colors.border, zIndex: 999999 }]}>
                         <TouchableOpacity
                           style={styles.dropdownHeader}
@@ -322,11 +342,9 @@ export default function ControllerScreen() {
                           color: colors.text,
                           borderColor: colors.border 
                         }]}
-                        placeholder="0.00"
                         placeholderTextColor={colors.textSecondary}
                         value={gasFee}
-                        keyboardType="numeric"
-                        onChangeText={setGasFee}
+                        editable={false}
                       />
                       <View style={[styles.currencyDisplay, { backgroundColor: colors.primary + '20' }]}>
                         <Text style={[styles.currencyText, { color: colors.primary }]}>{balanceCurrency}</Text>

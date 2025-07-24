@@ -49,3 +49,9 @@ You can intuitively control IoT devices using button operations, AR, and chat.
    ```bash
    npx expo start --web
    ```
+
+6. **Mint tokens**
+   To issue a test token in the development environment, execute the following command.
+   ```bash
+   node test/mint.ts <principal> <currency> <amount>
+   ```

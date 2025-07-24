@@ -50,3 +50,9 @@ ICPプラットフォームを活用したIoTデバイスコントロールア�
    ```bash
    npx expo start --web
    ```
+
+6. **トークン発行**
+   開発環境でテスト用トークンを発行する場合、以下のコマンドを実行します
+   ```bash
+   node test/mint.ts <principal> <currency> <amount>
+   ```
