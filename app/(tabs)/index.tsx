@@ -28,7 +28,7 @@ interface ICPSession {
 export default function ControllerScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useLanguage();
-  const { login: icpLogin, isAuthenticated: icpAuthenticated, principal: icpPrincipal, isLoading: icpLoading } = useInternetIdentity();
+  const { login: icpLogin, logout: icpLogout, isAuthenticated: icpAuthenticated, principal: icpPrincipal, isLoading: icpLoading } = useInternetIdentity();
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
 
   const [connectionStatus, setConnectionStatus] = useState({
@@ -131,26 +131,22 @@ export default function ControllerScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      t('controls:authentication.logoutConfirm'),
-      t('controls:authentication.logoutConfirmMessage'),
-      [
-        { text: t('common:cancel'), style: 'cancel' },
-        {
-          text: t('controls:authentication.logout'),
-          style: 'destructive',
-          onPress: () => {
-            setUserPrincipal(null);
-            setCurrentSession(null);
-            setConnectionStatus(prev => ({ ...prev, icp: false, esp32: false }));
-            setRegisteredUsername(null);
-            setShowUsernameRegistration(false);
-            setIsControlActive(false);
-          }
-        }
-      ]
-    );
+  const handleLogout = async () => {
+    try {
+      // Call the actual Internet Identity logout
+      await icpLogout();
+      
+      // Clear local state
+      setUserPrincipal(null);
+      setCurrentSession(null);
+      setConnectionStatus(prev => ({ ...prev, icp: false, esp32: false }));
+      setRegisteredUsername(null);
+      setShowUsernameRegistration(false);
+      setIsControlActive(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Logout Failed', error instanceof Error ? error.message : 'Unknown error');
+    }
   };
 
   const styles = createStyles(colors, isDark, screenDimensions, isTablet, isLargeScreen, isSmallScreen);
@@ -162,13 +158,13 @@ export default function ControllerScreen() {
           <View style={styles.headerLeft}>
             {userPrincipal && (
               <View style={styles.principalContainer}>
-                <User size={16} color={colors.textSecondary} />
+                <User size={16} color={colors.text} />
                 {registeredUsername ? (
-                  <Text style={[styles.usernameText, { color: colors.primary }]}>
+                  <Text style={[styles.usernameText, { color: colors.text }]}>
                     {registeredUsername}
                   </Text>
                 ) : (
-                  <Text style={[styles.principalText, { color: colors.textSecondary }]}>
+                  <Text style={[styles.principalText, { color: colors.text }]}>
                     {userPrincipal.slice(0, 20)}...
                   </Text>
                 )}

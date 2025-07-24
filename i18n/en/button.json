@@ -1,0 +1,33 @@
+{
+  "title": "Touch UI",
+  "subtitle": "Smart Gacha Controller",
+  "ui": {
+    "authenticated": "Authenticated",
+    "notAuthenticated": "Not Authenticated"
+  },
+  "session": {
+    "loginRequired": "Please login with Internet Identity",
+    "loginButton": "login with ICP"
+  },
+  "device": {
+    "control": {
+      "title": "Device Control",
+      "executeOperation": "Drive Gacha"
+    },
+    "info": {
+      "title": "Device Information",
+      "targetDevice": "Target Device",
+      "deviceName": "Smart Gacha",
+      "connectionStatus": "Connection Status",
+      "connectionValue": "Connected via ICP",
+      "cooldownPeriod": "Cooldown Period",
+      "cooldownValue": "10 seconds"
+    },
+    "status": {
+      "processing": "Processing...",
+      "success": "Success",
+      "error": "Error",
+      "idle": "Status"
+    }
+  }
+}

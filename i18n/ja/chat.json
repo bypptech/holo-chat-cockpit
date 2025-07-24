@@ -1,5 +1,5 @@
 {
-  "title": "デバイスチャット",
+  "title": "チャットUI",
   "subtitle": "自然言語でデバイスを制御",
   "connectedDevices": "接続済みデバイス",
   "quickCommands": {
@@ -81,7 +81,8 @@
   "session": {
     "networkError": "ネットワーク接続エラーが発生しました。\n\n🔄 自動的に再試行しています...\n\n💡 ページを更新するか、少し待ってから再度お試しください。\n\n✅ システム設定は正常です（Supabase、Internet Identity共に動作中）",
     "initError": "セッションの初期化でエラーが発生しました。\n\nエラー: {{error}}\n\n✅ 環境変数は正常に設定されています\n💡 一時的な問題の可能性があります\n\n詳細はコンソールログをご確認ください。",
-    "loginRequired": "Internet Identityでログインしてください"
+    "loginRequired": "Internet Identityでログインしてください",
+    "loginButton": "ICPでログイン"
   },
   "ui": {
     "subtitle": "シンプルに繋がる、言葉で操作する、あなたのための対話型オペレーター",

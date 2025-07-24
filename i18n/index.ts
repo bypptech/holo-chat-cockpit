@@ -14,6 +14,7 @@ import enNetwork from './en/network.json';
 import enSettings from './en/settings.json';
 import enAuth from './en/auth.json';
 import enAr from './en/ar.json';
+import enButton from './en/button.json';
 import enIcp from './en/icp.json';
 import enAi from './en/ai.json';
 
@@ -27,6 +28,7 @@ import jaNetwork from './ja/network.json';
 import jaSettings from './ja/settings.json';
 import jaAuth from './ja/auth.json';
 import jaAr from './ja/ar.json';
+import jaButton from './ja/button.json';
 import jaIcp from './ja/icp.json';
 import jaAi from './ja/ai.json';
 
@@ -109,6 +111,7 @@ const initI18n = async () => {
         'settings',
         'auth',
         'ar',
+        'button',
         'icp',
         'ai'
       ],
@@ -126,6 +129,7 @@ const initI18n = async () => {
           settings: enSettings,
           auth: enAuth,
           ar: enAr,
+          button: enButton,
           icp: enIcp,
           ai: enAi
         },
@@ -140,6 +144,7 @@ const initI18n = async () => {
           settings: jaSettings,
           auth: jaAuth,
           ar: jaAr,
+          button: jaButton,
           icp: jaIcp,
           ai: jaAi
         },

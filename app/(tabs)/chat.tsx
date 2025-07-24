@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { useRouter } from 'expo-router';
+
 import { LinearGradient } from 'expo-linear-gradient';
-import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield } from 'lucide-react-native';
+import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield, Infinity } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
@@ -55,8 +57,9 @@ interface AvailableFeature {
 export default function CCCChatScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useLanguage();
-  const { isAuthenticated, principal } = useInternetIdentity();
+  const { isAuthenticated, principal, login, logout, isLoading: authLoading } = useInternetIdentity();
   const { getChatEnabledDevices } = useChatDevice();
+  const router = useRouter(); 
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -172,6 +175,15 @@ export default function CCCChatScreen() {
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
+
+  const handleLogin = async () => {
+    try {
+      router.push('/');
+    } catch (error) {
+      Alert.alert('Login Failed', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
 
   const handleFeatureSelect = (featureId: string) => {
     // Toggle selection if the same feature is tapped
@@ -485,18 +497,6 @@ export default function CCCChatScreen() {
           </View>
 
           <Text style={[styles.featureName, { color: colors.text }]}>{feature.name}</Text>
-          <Text style={[styles.featureDescription, { color: colors.textSecondary }]}>
-            {feature.description}
-          </Text>
-
-          <View style={styles.operationsContainer}>
-            <Text style={[styles.operationsLabel, { color: colors.primary }]}>
-              {t('chat:features.operations')}
-            </Text>
-            <Text style={[styles.operationsList, { color: colors.textSecondary }]}>
-              {feature.operations.join(', ')}
-            </Text>
-          </View>
         </BlurView>
       </TouchableOpacity>
     );
@@ -848,8 +848,10 @@ export default function CCCChatScreen() {
         <View style={styles.contentWrapper}>
           <View style={styles.header}>
             <View style={styles.headerContent}>
-            <Text style={[styles.title, { color: colors.text }]}>Chat</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {t('chat:title')}
+            </Text>
+            <Text style={[styles.subtitle, { color: isDark ? colors.textSecondary : colors.text }]}>
               {t('chat:ui.subtitle')}
             </Text>
           </View>
@@ -873,68 +875,97 @@ export default function CCCChatScreen() {
           </View>
         </View>
 
-        {isAuthenticated && (
-          <View style={styles.featuresSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t('chat:features.selectInstruction')}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuresScroll}>
-              {availableFeatures.map(renderFeatureCard)}
-            </ScrollView>
-          </View>
-        )}
-
-        <View style={styles.chatContainer}>
-          <ScrollView 
-            ref={scrollViewRef}
-            style={styles.messagesContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            {messages.map(renderMessage)}
-
-            {isLoading && (
-              <View style={styles.typingIndicator}>
-                <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.typingBlur}>
-                  <View style={styles.typingDots}>
-                    <View style={[styles.dot, styles.dot1, { backgroundColor: colors.primary }]} />
-                    <View style={[styles.dot, styles.dot2, { backgroundColor: colors.primary }]} />
-                    <View style={[styles.dot, styles.dot3, { backgroundColor: colors.primary }]} />
-                  </View>
-                  <Text style={[styles.typingText, { color: colors.textSecondary }]}>
-                    {t('chat:ui.processing')}
-                  </Text>
-                </BlurView>
-              </View>
-            )}
-          </ScrollView>
-
-          <BlurView intensity={isDark ? 90 : 70} tint={isDark ? "dark" : "light"} style={styles.inputContainer}>
-            <TextInput
-              style={[styles.textInput, { color: colors.text }]}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder={t('chat:ui.placeholder')}
-              placeholderTextColor={colors.textSecondary}
-              multiline
-              maxLength={100}
-              onSubmitEditing={handleSendMessage}
-              editable={isAuthenticated}
-            />
-
-            <TouchableOpacity 
-              style={[
-                styles.sendButton, 
-                { 
-                  backgroundColor: inputText.trim() && isAuthenticated ? colors.primary : colors.surface 
-                }
-              ]}
-              onPress={handleSendMessage}
-              disabled={!inputText.trim() || isLoading || !isAuthenticated}
+        {!isAuthenticated ? (
+          /* Login Required Message */
+          <View style={styles.loginRequiredContainer}>
+            <BlurView
+              intensity={isDark ? 80 : 60}
+              tint={isDark ? "dark" : "light"}
+              style={styles.loginRequiredBlur}
             >
-              <Send size={20} color={inputText.trim() && isAuthenticated ? "#fff" : colors.textSecondary} />
-            </TouchableOpacity>
-          </BlurView>
-        </View>
+              <Infinity size={48} color={isDark ? "#fff" : colors.primary} />
+              <Text style={[styles.loginRequiredTitle, { color: colors.text }]}>
+                {t('chat:session.loginRequired')}
+              </Text>
+              <TouchableOpacity
+                style={[styles.loginButton, { backgroundColor: colors.primary }]}
+                onPress={handleLogin}
+                disabled={authLoading}
+              >
+                {authLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.loginButtonText}>
+                    {t('chat:session.loginButton')}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </BlurView>
+          </View>
+        ) : (
+          <>
+            <View style={styles.featuresSection}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('chat:features.selectInstruction')}
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuresScroll}>
+                {availableFeatures.map(renderFeatureCard)}
+              </ScrollView>
+            </View>
+
+            <View style={styles.chatContainer}>
+              <ScrollView 
+                ref={scrollViewRef}
+                style={styles.messagesContainer}
+                showsVerticalScrollIndicator={false}
+              >
+                {messages.map(renderMessage)}
+
+                {isLoading && (
+                  <View style={styles.typingIndicator}>
+                    <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.typingBlur}>
+                      <View style={styles.typingDots}>
+                        <View style={[styles.dot, styles.dot1, { backgroundColor: colors.primary }]} />
+                        <View style={[styles.dot, styles.dot2, { backgroundColor: colors.primary }]} />
+                        <View style={[styles.dot, styles.dot3, { backgroundColor: colors.primary }]} />
+                      </View>
+                      <Text style={[styles.typingText, { color: colors.textSecondary }]}>
+                        {t('chat:ui.processing')}
+                      </Text>
+                    </BlurView>
+                  </View>
+                )}
+              </ScrollView>
+
+              <BlurView intensity={isDark ? 90 : 70} tint={isDark ? "dark" : "light"} style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.textInput, { color: colors.text }]}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  placeholder={t('chat:ui.placeholder')}
+                  placeholderTextColor={colors.textSecondary}
+                  multiline
+                  maxLength={100}
+                  onSubmitEditing={handleSendMessage}
+                  editable={isAuthenticated}
+                />
+
+                <TouchableOpacity 
+                  style={[
+                    styles.sendButton, 
+                    { 
+                      backgroundColor: inputText.trim() && isAuthenticated ? colors.primary : colors.surface 
+                    }
+                  ]}
+                  onPress={handleSendMessage}
+                  disabled={!inputText.trim() || isLoading || !isAuthenticated}
+                >
+                  <Send size={20} color={inputText.trim() && isAuthenticated ? "#fff" : colors.textSecondary} />
+                </TouchableOpacity>
+              </BlurView>
+            </View>
+          </>
+        )}
 
         <ConfirmationPanel
           visible={showConfirmation}
@@ -1232,5 +1263,36 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+  },
+  loginRequiredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loginRequiredBlur: {
+    borderRadius: 20,
+    padding: 40,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  loginRequiredTitle: {
+    fontSize: 20,
+    fontFamily: 'NotoSansJP-SemiBold',
+    marginTop: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  loginButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-SemiBold',
+    color: '#fff',
   },
 });

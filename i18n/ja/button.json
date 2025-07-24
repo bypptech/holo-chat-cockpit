@@ -1,0 +1,33 @@
+{
+  "title": "タッチUI",
+  "subtitle": "Smart Gacha コントローラー",
+  "ui": {
+    "authenticated": "認証済み",
+    "notAuthenticated": "未認証"
+  },
+  "session": {
+    "loginRequired": "Internet Identityでログインしてください", 
+    "loginButton": "ICPでログイン"
+  },
+  "device": {
+    "control": {
+      "title": "デバイス制御",
+      "executeOperation": "ガチャを回す"
+    },
+    "info": {
+      "title": "デバイス情報",
+      "targetDevice": "対象デバイス",
+      "deviceName": "Smart Gacha",
+      "connectionStatus": "接続状態",
+      "connectionValue": "ICP経由で接続済み",
+      "cooldownPeriod": "クールダウン期間",
+      "cooldownValue": "10秒"
+    },
+    "status": {
+      "processing": "処理中...",
+      "success": "成功",
+      "error": "エラー",
+      "idle": "ステータス"
+    }
+  }
+}

@@ -1,120 +1,179 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Shield, Eye, EyeOff } from 'lucide-react-native';
-import MindARPanel from '@/components/MindARPanel';
-import { ICPAuth } from '@/components/auth/ICPAuth';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Infinity, Shield } from 'lucide-react-native';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
+import MindARPanel from '@/components/MindARPanel';
 
 export default function MindAROnlyScreen() {
-  const [showAuth, setShowAuth] = useState(false);
-  const { isAuthenticated, principal } = useInternetIdentity();
+  const { isDark, colors } = useTheme();
   const { t } = useTranslation();
+  const { isAuthenticated, login, isLoading: authLoading } = useInternetIdentity();
+  const router = useRouter();
 
-  const toggleAuthPanel = () => {
-    setShowAuth(!showAuth);
-  };
-
-  const handleAuthChange = (authenticated: boolean, data?: { principal: string }) => {
-    console.log('Authentication changed:', authenticated, data);
-    if (authenticated) {
-      setShowAuth(false);
+  const handleLogin = async () => {
+    try {
+      router.push('/');
+    } catch (error) {
+      Alert.alert('Login Failed', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 
+  const styles = createStyles(colors, isDark);
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Show MindARPanel only when authenticated */}
-      {isAuthenticated ? (
-        <MindARPanel />
-      ) : (
-        <View style={styles.unauthenticatedContainer}>
-          <Text style={styles.unauthenticatedText}>
-            {t('ar:requireAuth')}
-          </Text>
-        </View>
-      )}
-      
-      {/* Floating Auth Button */}
-      <TouchableOpacity style={styles.authButton} onPress={toggleAuthPanel}>
-        <Shield size={24} color={isAuthenticated ? "#00FF88" : "#007AFF"} />
-        {isAuthenticated && (
-          <Text style={styles.authButtonText}>
-            {principal?.slice(0, 6)}...
-          </Text>
-        )}
-      </TouchableOpacity>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={isDark ? ['#000428', '#004e92'] : ['#667eea', '#764ba2']}
+        style={styles.gradient}
+      >
+        <View style={styles.contentWrapper}>
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              <Text style={[styles.title, { color: colors.text }]}>
+                {t('ar:title')}
+              </Text>
+              <Text style={[styles.subtitle, { color: isDark ? colors.textSecondary : colors.text }]}>
+                {t('ar:ui.subtitle')}
+              </Text>
+            </View>
 
-      {/* Toggle Auth Panel Button */}
-      <TouchableOpacity style={styles.toggleButton} onPress={toggleAuthPanel}>
-        {showAuth ? (
-          <EyeOff size={20} color="#fff" />
-        ) : (
-          <Eye size={20} color="#fff" />
-        )}
-      </TouchableOpacity>
+            {/* Auth Status Badge */}
+            <View style={styles.authStatus}>
+              {isAuthenticated ? (
+                <View style={[styles.authBadge, { backgroundColor: colors.success + '20' }]}>
+                  <Shield size={12} color={colors.success} />
+                  <Text style={[styles.authText, { color: colors.success }]}>
+                    {t('chat:ui.authenticated')}
+                  </Text>
+                </View>
+              ) : (
+                <View style={[styles.authBadge, { backgroundColor: colors.warning + '20' }]}>
+                  <Shield size={12} color={colors.warning} />
+                  <Text style={[styles.authText, { color: colors.warning }]}>
+                    {t('chat:ui.notAuthenticated')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
 
-      {/* Auth Panel Overlay */}
-      {showAuth && (
-        <View style={styles.authOverlay}>
-          <ICPAuth onAuthChange={handleAuthChange} />
+          {!isAuthenticated ? (
+            /* Login Required */
+            <View style={styles.loginRequiredContainer}>
+              <BlurView
+                intensity={isDark ? 80 : 60}
+                tint={isDark ? "dark" : "light"}
+                style={styles.loginRequiredBlur}
+              >
+                <Infinity size={48} color={isDark ? "#fff" : colors.primary} />
+                <Text style={[styles.loginRequiredTitle, { color: colors.text }]}>
+                  {t('ar:loginRequired')}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.loginButton, { backgroundColor: colors.primary }]}
+                  onPress={handleLogin}
+                  disabled={authLoading}
+                >
+                  {authLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.loginButtonText}>
+                      {t('ar:loginButton')}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </BlurView>
+            </View>
+          ) : (
+            <MindARPanel />
+          )}
         </View>
-      )}
+      </LinearGradient>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
   },
-  unauthenticatedContainer: {
+  gradient: {
+    flex: 1,
+  },
+  contentWrapper: {
+    flex: 1,
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  headerContent: {
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 32,
+    fontFamily: 'NotoSansJP-Bold',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-Regular',
+    lineHeight: 20,
+  },
+  authStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  authBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  authText: {
+    fontSize: 12,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+  loginRequiredContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingVertical: 60,
   },
-  unauthenticatedText: {
-    fontSize: 18,
-    fontFamily: 'NotoSansJP-Medium',
-    color: '#fff',
-    textAlign: 'center',
-    lineHeight: 26,
-  },
-  authButton: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  loginRequiredBlur: {
     borderRadius: 20,
-    gap: 8,
-    zIndex: 1000,
+    padding: 40,
+    alignItems: 'center',
+    overflow: 'hidden',
   },
-  authButtonText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#00FF88',
+  loginRequiredTitle: {
+    fontSize: 20,
+    fontFamily: 'NotoSansJP-SemiBold',
+    marginTop: 16,
+    marginBottom: 24,
+    textAlign: 'center',
   },
-  toggleButton: {
-    position: 'absolute',
-    top: 110,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: 8,
-    borderRadius: 16,
-    zIndex: 1000,
+  loginButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 200,
+    alignItems: 'center',
   },
-  authOverlay: {
-    position: 'absolute',
-    top: 160,
-    right: 20,
-    left: 20,
-    zIndex: 999,
+  loginButtonText: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-SemiBold',
+    color: '#fff',
   },
 });

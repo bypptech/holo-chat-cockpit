@@ -19,7 +19,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: {
-          fontFamily: 'Inter-Medium',
+          fontFamily: 'NotoSansJP-Medium',
           fontSize: 10,
         },
       }}>

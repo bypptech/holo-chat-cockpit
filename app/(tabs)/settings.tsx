@@ -557,7 +557,7 @@ export default function SettingsScreen() {
         <View style={styles.contentWrapper}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>Setting</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('settings:subtitle')}</Text>
+            <Text style={[styles.subtitle, { color: isDark ? colors.textSecondary : colors.text }]}>{t('settings:subtitle')}</Text>
           </View>
 
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

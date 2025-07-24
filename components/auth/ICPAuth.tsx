@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Globe, Shield, User, LogOut, RefreshCw } from 'lucide-react-native';
+import { Globe, Shield, User, LogOut, RefreshCw, Infinity } from 'lucide-react-native';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface ICPAuthProps {
   onAuthChange?: (authenticated: boolean, data?: { principal: string }) => void;
@@ -19,6 +20,7 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
     isLoading, 
     error 
   } = useInternetIdentity();
+  const { isDark } = useTheme();
 
   const handleLogin = async () => {
     try {
@@ -57,7 +59,7 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
   return (
     <BlurView intensity={80} tint="dark" style={styles.container}>
       <View style={styles.header}>
-        <Globe size={24} color="#007AFF" />
+        <Infinity size={24} color={isDark ? "#fff" : "#007AFF"} />
         <Text style={styles.title}>Internet Identity</Text>
       </View>
 
@@ -100,13 +102,11 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
             onPress={handleLogin}
             disabled={isLoading}
           >
-            {isLoading ? (
+            {isLoading && (
               <RefreshCw size={20} color="#fff" />
-            ) : (
-              <Shield size={20} color="#fff" />
             )}
             <Text style={styles.authButtonText}>
-              {isLoading ? 'Connecting...' : 'Connect with Internet Identity'}
+              {isLoading ? 'Connecting...' : 'Login with Internet Identity'}
             </Text>
           </TouchableOpacity>
         </>
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'NotoSansJP-SemiBold',
     color: '#fff',
     marginLeft: 12,
   },
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'NotoSansJP-Regular',
     color: '#FF6B35',
     textAlign: 'center',
   },
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'NotoSansJP-Medium',
     color: '#B0B0B0',
     marginBottom: 12,
   },
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   networkText: {
     fontSize: 12,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'NotoSansJP-Medium',
     color: '#fff',
   },
   authButton: {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   authButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'NotoSansJP-SemiBold',
     color: '#fff',
   },
   userInfo: {
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   userLabel: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'NotoSansJP-SemiBold',
     color: '#00FF88',
     marginLeft: 8,
   },
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
   },
   principalLabel: {
     fontSize: 12,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'NotoSansJP-Medium',
     color: '#B0B0B0',
   },
   principalText: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'NotoSansJP-Regular',
     color: '#fff',
   },
 });

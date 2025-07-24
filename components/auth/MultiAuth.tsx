@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Shield, Globe, AlertCircle } from 'lucide-react-native';
+import { Shield, Globe, AlertCircle, Infinity } from 'lucide-react-native';
 import { ICPAuth } from './ICPAuth';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface MultiAuthProps {
   onAuthChange?: (
@@ -18,6 +19,7 @@ export function MultiAuth({ onAuthChange }: MultiAuthProps) {
   const [selectedAuth, setSelectedAuth] = useState<'none' | 'icp'>('none');
   const { isAuthenticated: icpAuthenticated, principal, error: icpError } = useInternetIdentity();
   const { t } = useTranslation();
+  const { isDark } = useTheme();
 
   // Check if any authentication method is active
   const isAnyAuthenticated = icpAuthenticated;
@@ -53,7 +55,7 @@ export function MultiAuth({ onAuthChange }: MultiAuthProps) {
           <Text style={styles.statusTitle}>{t('auth:authenticated')}</Text>
           {icpAuthenticated && (
             <View style={styles.statusItem}>
-              <Globe size={16} color="#00FF88" />
+              <Infinity size={16} color={isDark ? "#fff" : "#00FF88"} />
               <Text style={styles.statusText}>
                 {t('auth:internetIdentity')}: {principal?.slice(0, 8)}...{principal?.slice(-6)}
               </Text>
@@ -86,7 +88,7 @@ export function MultiAuth({ onAuthChange }: MultiAuthProps) {
           ]}
           onPress={() => setSelectedAuth('icp')}
         >
-          <Globe size={32} color={icpAuthenticated ? "#00FF88" : "#007AFF"} />
+          <Infinity size={32} color={isDark ? "#fff" : (icpAuthenticated ? "#00FF88" : "#007AFF")} />
           <Text style={styles.optionTitle}>{t('auth:internetIdentity')}</Text>
           <Text style={styles.optionDescription}>
             {icpAuthenticated ? t('auth:authenticatedManage') : t('auth:loginWithII')}
@@ -118,7 +120,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'NotoSansJP-Medium',
     color: '#007AFF',
   },
   header: {
@@ -128,7 +130,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'NotoSansJP-SemiBold',
     color: '#fff',
     marginLeft: 12,
   },
@@ -142,7 +144,7 @@ const styles = StyleSheet.create({
   },
   statusTitle: {
     fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'NotoSansJP-SemiBold',
     color: '#00FF88',
     marginBottom: 8,
   },
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'NotoSansJP-Regular',
     color: '#fff',
     marginLeft: 8,
   },
@@ -169,14 +171,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'NotoSansJP-Regular',
     color: '#FF6B35',
     marginLeft: 8,
     flex: 1,
   },
   description: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'NotoSansJP-Regular',
     color: '#B0B0B0',
     textAlign: 'center',
     marginBottom: 24,
@@ -204,14 +206,14 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'NotoSansJP-SemiBold',
     color: '#fff',
     marginTop: 12,
     marginBottom: 8,
   },
   optionDescription: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'NotoSansJP-Regular',
     color: '#B0B0B0',
     textAlign: 'center',
     lineHeight: 16,
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
   },
   authenticatedBadgeText: {
     fontSize: 12,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'NotoSansJP-Bold',
     color: '#000',
   },
 });

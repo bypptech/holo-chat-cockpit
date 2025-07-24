@@ -43,6 +43,7 @@
   "version": "Version",
   "language": "Language",
   "theme": "Theme",
+  "touchUI": "Touch UI",
   "light": "Light",
   "dark": "Dark",
   "system": "System",

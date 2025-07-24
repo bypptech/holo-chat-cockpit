@@ -1,5 +1,5 @@
 {
-  "title": "Device Chat",
+  "title": "Chat UI",
   "subtitle": "Control your devices with natural language",
   "connectedDevices": "Connected Devices",
   "quickCommands": {
@@ -81,7 +81,8 @@
   "session": {
     "networkError": "Network connection error occurred.\n\n🔄 Automatically retrying...\n\n💡 Please refresh the page or wait a moment and try again.\n\n✅ System configuration is correct (Supabase and Internet Identity are both operational)",
     "initError": "Error occurred during session initialization.\n\nError: {{error}}\n\n✅ Environment variables are properly configured\n💡 This might be a temporary issue\n\nPlease check console logs for details.",
-    "loginRequired": "Please login with Internet Identity"
+    "loginRequired": "Please login with Internet Identity",
+    "loginButton": "login with ICP"
   },
   "ui": {
     "subtitle": "Chat. Control. Connect. - Your conversational operator",

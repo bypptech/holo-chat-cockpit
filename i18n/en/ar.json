@@ -1,3 +1,9 @@
 {
-  "requireAuth": "Authentication is required to use MindAR features"
+  "title": "AR Camera",
+  "ui": {
+    "subtitle": "Augmented Reality Experience"
+  },
+  "requireAuth": "Authentication is required to use MindAR features",
+  "loginRequired": "Please login with Internet Identity",
+  "loginButton": "login with ICP"
 }
