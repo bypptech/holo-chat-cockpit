@@ -1,0 +1,19 @@
+{
+  "walletStatus": "Wallet Status",
+  "newTransfer": "New Transfer",
+  "recipientAddress": "Recipient Address",
+  "amount": "Amount",
+  "gasFee": "Gas Fee",
+  "totalAmount": "Total Amount",
+  "cancel": "Cancel",
+  "send": "Send",
+  "walletAddress": "Wallet Address",
+  "balance": "Balance",
+  "enterAddress": "Enter address...",
+  "transfer": "Transfer",
+  "transferInitiated": "Transfer Initiated",
+  "alerts": {
+    "copied": "Copied",
+    "addressCopied": "Address copied to clipboard"
+  }
+}

@@ -17,6 +17,7 @@ import enAr from './en/ar.json';
 import enButton from './en/button.json';
 import enIcp from './en/icp.json';
 import enAi from './en/ai.json';
+import enIndex from './en/index.json';
 
 import jaCommon from './ja/common.json';
 import jaNavigation from './ja/navigation.json';
@@ -31,6 +32,7 @@ import jaAr from './ja/ar.json';
 import jaButton from './ja/button.json';
 import jaIcp from './ja/icp.json';
 import jaAi from './ja/ai.json';
+import jaIndex from './ja/index.json';
 
 // Get device locale
 const getDeviceLocale = (): string => {
@@ -113,7 +115,8 @@ const initI18n = async () => {
         'ar',
         'button',
         'icp',
-        'ai'
+        'ai',
+        'index'
       ],
 
       // Resources
@@ -131,7 +134,8 @@ const initI18n = async () => {
           ar: enAr,
           button: enButton,
           icp: enIcp,
-          ai: enAi
+          ai: enAi,
+          index: enIndex
         },
         ja: {
           common: jaCommon,
@@ -146,7 +150,8 @@ const initI18n = async () => {
           ar: jaAr,
           button: jaButton,
           icp: jaIcp,
-          ai: jaAi
+          ai: jaAi,
+          index: jaIndex
         },
       },
 

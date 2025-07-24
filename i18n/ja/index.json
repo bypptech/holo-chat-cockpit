@@ -1,0 +1,19 @@
+{
+  "walletStatus": "ウォレット状態",
+  "newTransfer": "新規送金",
+  "recipientAddress": "受取人アドレス",
+  "amount": "金額",
+  "gasFee": "ガス料金",
+  "totalAmount": "合計金額",
+  "cancel": "キャンセル",
+  "send": "送信",
+  "walletAddress": "ウォレットアドレス",
+  "balance": "残高",
+  "enterAddress": "アドレスを入力...",
+  "transfer": "送金",
+  "transferInitiated": "送金を開始しました",
+  "alerts": {
+    "copied": "コピー済み",
+    "addressCopied": "アドレスをクリップボードにコピーしました"
+  }
+}

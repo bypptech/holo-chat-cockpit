@@ -9,9 +9,12 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Dimensions,
+  TextInput,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, User, LogOut, Fingerprint, Globe, Cloud } from "lucide-react-native";
+import { BlurView } from 'expo-blur';
+import { X, User, LogOut, Fingerprint, Globe, Cloud, Copy } from "lucide-react-native";
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { MultiAuth } from '@/components/auth/MultiAuth';
@@ -46,6 +49,14 @@ export default function ControllerScreen() {
   const [currentSession, setCurrentSession] = useState<ICPSession | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<'local' | 'testnet' | 'ic'>('local');
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [balanceCurrency, setBalanceCurrency] = useState<'ICP' | 'ckUSDC'>('ICP');
+  const [showBalancePicker, setShowBalancePicker] = useState(false);
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [gasFee, setGasFee] = useState('');
+
+  // Calculate total amount
+  const totalAmount = (parseFloat(transferAmount || '0') + parseFloat(gasFee || '0')).toFixed(2);
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -189,6 +200,175 @@ export default function ControllerScreen() {
           </View>
         </View>
 
+        {/* Blockchain Connection Section */}
+        {userPrincipal && (
+          <View style={styles.blockchainSection}>
+            <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.blockchainCard}>
+              {/* Wallet Cards Section */}
+              <View style={styles.walletCardsContainer}>
+                {/* Child Card 1: Wallet Status */}
+                <View style={[styles.walletCard, { backgroundColor: colors.card, zIndex: 10002 }]}>
+                  <Text style={[styles.walletCardTitle, { color: colors.text }]}>{t('index:walletStatus')}</Text>
+                  
+                  {/* Wallet Address with Copy */}
+                  <View style={styles.addressSection}>
+                    <Text style={[styles.addressLabel, { color: colors.textSecondary }]}>{t('index:walletAddress')}</Text>
+                    <TouchableOpacity 
+                      style={styles.addressContainer}
+                      onPress={async () => {
+                        await Clipboard.setStringAsync(userPrincipal);
+                        Alert.alert(t('index:alerts.copied'), t('index:alerts.addressCopied'));
+                      }}
+                    >
+                      <Text style={[styles.addressText, { color: colors.text }]}>
+                        {userPrincipal.slice(0, 12)}...{userPrincipal.slice(-12)}
+                      </Text>
+                      <Copy size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Balance with Currency Toggle */}
+                  <View style={[styles.balanceSection, { zIndex: 10000 }]}>
+                    <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>{t('index:balance')}</Text>
+                    <View style={[styles.balanceRow, { zIndex: 10001 }]}>
+                      <Text style={[styles.balanceAmount, { color: colors.text }]}>0.00</Text>
+                      <View style={[styles.currencyDropdown, { backgroundColor: colors.primary + '20', borderColor: colors.border, zIndex: 999999 }]}>
+                        <TouchableOpacity
+                          style={styles.dropdownHeader}
+                          onPress={() => setShowBalancePicker(!showBalancePicker)}
+                        >
+                          <Text style={[styles.currencyText, { color: colors.primary }]}>{balanceCurrency}</Text>
+                          <Text style={[styles.dropdownArrow, { color: colors.primary }]}>▼</Text>
+                        </TouchableOpacity>
+                        {showBalancePicker && (
+                          <View style={[styles.dropdownOptions, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                            <TouchableOpacity
+                              style={styles.dropdownOption}
+                              onPress={() => {
+                                setBalanceCurrency('ICP');
+                                setShowBalancePicker(false);
+                              }}
+                            >
+                              <Text style={[styles.dropdownOptionText, { color: colors.text }]}>ICP</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.dropdownOption, { borderTopWidth: 1, borderTopColor: colors.border }]}
+                              onPress={() => {
+                                setBalanceCurrency('ckUSDC');
+                                setShowBalancePicker(false);
+                              }}
+                            >
+                              <Text style={[styles.dropdownOptionText, { color: colors.text }]}>ckUSDC</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    {balanceCurrency === 'ICP' && (
+                      <Text style={[styles.balanceUsd, { color: colors.textSecondary }]}>≈ $0.00 USD</Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Child Card 2: New Transfer */}
+                <View style={[styles.walletCard, { backgroundColor: colors.card }]}>
+                  <Text style={[styles.walletCardTitle, { color: colors.text }]}>{t('index:newTransfer')}</Text>
+                  
+                  {/* Recipient Address Input */}
+                  <View style={styles.inputSection}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('index:recipientAddress')}</Text>
+                    <TextInput
+                      style={[styles.addressInput, { 
+                        backgroundColor: colors.background, 
+                        color: colors.text,
+                        borderColor: colors.border 
+                      }]}
+                      placeholder={t('index:enterAddress')}
+                      placeholderTextColor={colors.textSecondary}
+                      value={recipientAddress}
+                      onChangeText={setRecipientAddress}
+                    />
+                  </View>
+
+                  {/* Amount Input with Currency */}
+                  <View style={styles.inputSection}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('index:amount')}</Text>
+                    <View style={styles.amountInputContainer}>
+                      <TextInput
+                        style={[styles.amountInput, { 
+                          backgroundColor: colors.background, 
+                          color: colors.text,
+                          borderColor: colors.border 
+                        }]}
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textSecondary}
+                        value={transferAmount}
+                        keyboardType="numeric"
+                        onChangeText={setTransferAmount}
+                      />
+                      <View style={[styles.currencyDisplay, { backgroundColor: colors.primary + '20' }]}>
+                        <Text style={[styles.currencyText, { color: colors.primary }]}>{balanceCurrency}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Gas Fee Input */}
+                  <View style={styles.inputSection}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('index:gasFee')}</Text>
+                    <View style={styles.amountInputContainer}>
+                      <TextInput
+                        style={[styles.amountInput, { 
+                          backgroundColor: colors.background, 
+                          color: colors.text,
+                          borderColor: colors.border 
+                        }]}
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textSecondary}
+                        value={gasFee}
+                        keyboardType="numeric"
+                        onChangeText={setGasFee}
+                      />
+                      <View style={[styles.currencyDisplay, { backgroundColor: colors.primary + '20' }]}>
+                        <Text style={[styles.currencyText, { color: colors.primary }]}>{balanceCurrency}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Total Amount Display */}
+                  <View style={[styles.totalSection, { borderTopColor: colors.border }]}>
+                    <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>{t('index:totalAmount')}</Text>
+                    <View style={styles.totalRow}>
+                      <Text style={[styles.totalAmount, { color: colors.text }]}>{totalAmount}</Text>
+                      <Text style={[styles.totalCurrency, { color: colors.text }]}>{balanceCurrency}</Text>
+                    </View>
+                  </View>
+
+                  {/* Transfer Actions */}
+                  <View style={styles.transferActions}>
+                    <TouchableOpacity 
+                      style={[styles.resetButton, { borderColor: colors.border }]}
+                      onPress={() => {
+                        setRecipientAddress('');
+                        setTransferAmount('');
+                        setGasFee('');
+                      }}
+                    >
+                      <Text style={[styles.resetButtonText, { color: colors.text }]}>{t('index:cancel')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.transferButton, { backgroundColor: colors.primary }]}
+                      onPress={() => {
+                        Alert.alert(t('index:transfer'), t('index:transferInitiated'));
+                      }}
+                    >
+                      <Text style={styles.transferButtonText}>{t('index:send')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </BlurView>
+          </View>
+        )}
        
         {/* Login Modal */}
         <Modal
@@ -243,7 +423,8 @@ export default function ControllerScreen() {
               </View>
             </View>
           </View>
-        </Modal>          
+        </Modal>
+          
       </LinearGradient>
     </SafeAreaView>
   );
@@ -341,6 +522,177 @@ const createStyles = (colors: any, isDark: boolean, screenDimensions: any, isTab
     fontSize: 14,
     fontFamily: 'NotoSansJP-Regular',
     marginBottom: 16,
+  },
+
+  // Blockchain Connection
+  blockchainSection: {
+    paddingHorizontal: isTablet ? 40 : isSmallScreen ? 16 : 20,
+    marginBottom: 24,
+  },
+  blockchainCard: {
+    borderRadius: 16,
+    padding: 20,
+    overflow: 'hidden',
+  },
+  blockchainHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  blockchainTitle: {
+    fontSize: isTablet ? 20 : isSmallScreen ? 16 : 18,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+  protocolBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  protocolBadgeText: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Bold',
+  },
+  connectedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  connectedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  connectedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  connectedText: {
+    fontSize: isTablet ? 18 : isSmallScreen ? 14 : 16,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+  networkBadge: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Medium',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  walletBalanceSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingVertical: 20,
+  },
+  balanceLabel: {
+    fontSize: isTablet ? 16 : isSmallScreen ? 12 : 14,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 8,
+  },
+  balanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    fontSize: isLargeScreen ? 42 : isTablet ? 38 : isSmallScreen ? 28 : 36,
+    fontFamily: 'NotoSansJP-Bold',
+  },
+  balanceCurrency: {
+    fontSize: isTablet ? 20 : isSmallScreen ? 14 : 18,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+  balanceUsd: {
+    fontSize: isTablet ? 16 : isSmallScreen ? 12 : 14,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  monitorSection: {
+    marginBottom: 24,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  panelTitle: {
+    fontSize: isTablet ? 20 : isSmallScreen ? 16 : 18,
+    fontFamily: 'NotoSansJP-SemiBold',
+    marginBottom: 16,
+  },
+  monitorStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  monitorStat: {
+    alignItems: 'center',
+  },
+  monitorStatLabel: {
+    fontSize: isTablet ? 12 : isSmallScreen ? 8 : 10,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 4,
+  },
+  monitorStatValue: {
+    fontSize: isTablet ? 18 : isSmallScreen ? 14 : 16,
+    fontFamily: 'NotoSansJP-Bold',
+  },
+  configureButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  configureButtonText: {
+    fontSize: isTablet ? 16 : isSmallScreen ? 12 : 14,
+    fontFamily: 'NotoSansJP-Medium',
+  },
+  sessionDetails: {
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  sessionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sessionLabel: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  sessionValue: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  connectedActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 6,
+  },
+  actionButtonText: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-SemiBold',
+    color: '#fff',
   },
 
 
@@ -580,4 +932,190 @@ const createStyles = (colors: any, isDark: boolean, screenDimensions: any, isTab
     fontSize: 16,
     fontFamily: 'NotoSansJP-SemiBold',
   },
+
+  // Wallet Cards Styles
+  walletCardsContainer: {
+    gap: 16,
+    marginBottom: 24,
+  },
+  walletCard: {
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'visible',
+  },
+  walletCardTitle: {
+    fontSize: isTablet ? 20 : isSmallScreen ? 16 : 18,
+    fontFamily: 'NotoSansJP-Bold',
+    marginBottom: 20,
+  },
+  addressSection: {
+    marginBottom: 20,
+  },
+  addressLabel: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 8,
+  },
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 12,
+    borderRadius: 8,
+  },
+  addressText: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Medium',
+    flex: 1,
+  },
+  balanceSection: {
+    marginBottom: 0,
+    overflow: 'visible',
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+    overflow: 'visible',
+  },
+  currencyDropdown: {
+    position: 'relative',
+    borderRadius: 8,
+    minWidth: 90,
+    borderWidth: 1,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dropdownArrow: {
+    fontSize: 10,
+    marginLeft: 4,
+  },
+  dropdownOptions: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginTop: 4,
+    zIndex: 9999999,
+    elevation: 99999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  dropdownOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dropdownOptionText: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Medium',
+  },
+  currencyText: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+  currencyDisplay: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  inputSection: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 8,
+  },
+  addressInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  amountInputContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  amountInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  transferActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  transferButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  transferButtonText: {
+    fontSize: isTablet ? 16 : isSmallScreen ? 12 : 14,
+    fontFamily: 'NotoSansJP-SemiBold',
+    color: '#fff',
+  },
+  resetButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  resetButtonText: {
+    fontSize: isTablet ? 16 : isSmallScreen ? 12 : 14,
+    fontFamily: 'NotoSansJP-Medium',
+  },
+
+  // Total Amount Styles
+  totalSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    marginBottom: 24,
+    borderTopWidth: 1,
+  },
+  totalLabel: {
+    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 8,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  totalAmount: {
+    fontSize: isTablet ? 24 : isSmallScreen ? 18 : 20,
+    fontFamily: 'NotoSansJP-Bold',
+  },
+  totalCurrency: {
+    fontSize: isTablet ? 16 : isSmallScreen ? 12 : 14,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+
 });

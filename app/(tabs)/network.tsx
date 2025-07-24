@@ -281,6 +281,8 @@ export default function NetworkScreen() {
 
   const styles = createStyles(colors, isDark);
 
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={isDark ? ['#000428', '#004e92'] : ['#667eea', '#764ba2']} style={styles.gradient}>
@@ -384,39 +386,150 @@ export default function NetworkScreen() {
                     </Text>
                   </View>
 
-                  <View style={styles.principalContainer}>
-                    <User size={16} color={colors.textSecondary} />
-                    <Text style={[styles.principalText, { color: colors.textSecondary }]}>
-                      {currentSession.principal.slice(0, 20)}...
-                    </Text>
-                    <TouchableOpacity onPress={() => copyToClipboard(currentSession.principal)}>
-                      <Copy size={16} color={colors.primary} />
+                  {/* Wallet Balance Section */}
+                  <View style={styles.walletBalanceSection}>
+                    <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>{t('network:walletBalance')}</Text>
+                    <View style={styles.balanceContainer}>
+                      <Text style={[styles.balanceAmount, { color: colors.text }]}>0</Text>
+                      <Text style={[styles.balanceCurrency, { color: colors.primary }]}>ICP</Text>
+                    </View>
+                    <Text style={[styles.balanceUsd, { color: colors.textSecondary }]}>≈ $0.00 USD</Text>
+                  </View>
+
+                  {/* Transaction Panel */}
+                  <View style={styles.transactionPanel}>
+                    <Text style={[styles.panelTitle, { color: colors.text }]}>{t('network:newTransfer')}</Text>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('network:recipientAddress')}</Text>
+                      <TextInput
+                        style={[styles.addressInput, { 
+                          backgroundColor: colors.card, 
+                          color: colors.text,
+                          borderColor: colors.border 
+                        }]}
+                        placeholder={t('network:enterRecipientAddress')}
+                        placeholderTextColor={colors.textSecondary}
+                        multiline
+                        numberOfLines={2}
+                      />
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('network:amount')}</Text>
+                      <View style={styles.amountInputContainer}>
+                        <TextInput
+                          style={[styles.amountInput, { 
+                            backgroundColor: colors.card, 
+                            color: colors.text,
+                            borderColor: colors.border 
+                          }]}
+                          placeholder="0"
+                          placeholderTextColor={colors.textSecondary}
+                          keyboardType="numeric"
+                        />
+                        <Text style={[styles.currencyLabel, { color: colors.textSecondary }]}>ICP</Text>
+                      </View>
+                      <Text style={[styles.usdEquivalent, { color: colors.textSecondary }]}>≈ $0.00 USD</Text>
+                    </View>
+
+                    <View style={styles.gasSettingsContainer}>
+                      <Text style={[styles.gasLabel, { color: colors.textSecondary }]}>{t('network:transactionFee')}</Text>
+                      <View style={styles.gasOptions}>
+                        <TouchableOpacity style={[styles.gasOption, styles.selectedGasOption, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}>
+                          <Text style={[styles.gasOptionText, { color: colors.primary }]}>{t('network:standard')}</Text>
+                          <Text style={[styles.gasOptionValue, { color: colors.primary }]}>0.0001 ICP</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.gasOption, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                          <Text style={[styles.gasOptionText, { color: colors.text }]}>{t('network:fast')}</Text>
+                          <Text style={[styles.gasOptionValue, { color: colors.text }]}>0.0002 ICP</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity 
+                      style={[styles.transferButton, { backgroundColor: colors.primary }]}
+                      onPress={() => Alert.alert(t('network:transferInitiated'), t('network:transferMessage'))}
+                    >
+                      <Text style={styles.transferButtonText}>{t('network:initiateTransfer')}</Text>
                     </TouchableOpacity>
                   </View>
 
-                  <View style={styles.blockchainActions}>
+                  {/* Monitor Status Section */}
+                  <View style={styles.monitorSection}>
+                    <Text style={[styles.panelTitle, { color: colors.text }]}>{t('network:monitorStatus')}</Text>
+
+                    <View style={styles.monitorStats}>
+                      <View style={styles.monitorStat}>
+                        <Text style={[styles.monitorStatLabel, { color: colors.textSecondary }]}>{t('network:activeMonitors')}</Text>
+                        <Text style={[styles.monitorStatValue, { color: colors.text }]}>0</Text>
+                      </View>
+                      <View style={styles.monitorStat}>
+                        <Text style={[styles.monitorStatLabel, { color: colors.textSecondary }]}>{t('network:totalTxns')}</Text>
+                        <Text style={[styles.monitorStatValue, { color: colors.text }]}>0</Text>
+                      </View>
+                      <View style={styles.monitorStat}>
+                        <Text style={[styles.monitorStatLabel, { color: colors.textSecondary }]}>{t('network:lastUpdate')}</Text>
+                        <Text style={[styles.monitorStatValue, { color: colors.text }]}>{t('network:justNow')}</Text>
+                      </View>
+                    </View>
+
                     <TouchableOpacity 
-                      style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                      onPress={() => setShowLoginModal(true)}
+                      style={[styles.configureButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                      onPress={() => Alert.alert(t('network:configureAlerts'), t('network:alertsMessage'))}
                     >
-                      <Globe size={16} color="#fff" />
-                      <Text style={styles.actionButtonText}>{t('network:switchNetwork')}</Text>
+                      <SettingsIcon size={16} color={colors.text} />
+                      <Text style={[styles.configureButtonText, { color: colors.text }]}>{t('network:configureAlerts')}</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Session Details - Moved to bottom */}
+                  <View>
+                    <View >
+                      <Text style={{ color: colors.textSecondary }}>{t('network:principalId')}:</Text>
+                      <TouchableOpacity 
+                        style={styles.copyButton}
+                        onPress={() => {
+                          // Copy to clipboard logic would go here
+                          Alert.alert(t('network:copied'), t('network:copiedMessage'));
+                        }}
+                      >
+                        <Text style={{ color: colors.text }}>
+                          {currentSession.principal.slice(0, 8)}...{currentSession.principal.slice(-8)}
+                        </Text>
+                        <Copy size={14} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
+                    <View >
+                      <Text style={{ color: colors.textSecondary }}>{t('network:network')}:</Text>
+                      <Text style={{ color: colors.text }}>
+                        {currentSession.network === 'local' ? t('network:networks.local') :
+                         currentSession.network === 'ic' ? t('network:networks.mainnet') : t('network:networks.testnet')}
+                      </Text>
+                    </View>
+                    <View >
+                      <Text style={{ color: colors.textSecondary }}>{t('network:expiresAt')}:</Text>
+                      <Text style={{ color: colors.text }}>
+                        {new Date(currentSession.expiresAt).toLocaleDateString('ja-JP')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View >
+                    <TouchableOpacity 
+                      style={{ backgroundColor: colors.success }}
+                      onPress={() => setLastChecked(new Date())}
+                    >
+                      <RefreshCw size={16} color="#fff" />
+                      <Text >{t('network:refresh')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={[styles.actionButton, { backgroundColor: colors.secondary }]}
-                      onPress={() => setShowCanisterModal(true)}
-                    >
-                      <Server size={16} color="#fff" />
-                      <Text style={styles.actionButtonText}>{t('network:canisterIds')}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity 
-                      style={[styles.actionButton, { backgroundColor: colors.error }]}
+                      style={{ backgroundColor: colors.error }}
                       onPress={handleICPLogout}
                     >
                       <LogOut size={16} color="#fff" />
-                      <Text style={styles.actionButtonText}>{t('controls:authentication.logout')}</Text>
+                      <Text>{t('controls:authentication.logout')}</Text>
                     </TouchableOpacity>
                   </View>
                 </>
@@ -717,10 +830,6 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 4,
     marginRight: 8,
   },
-  connectedText: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-  },
   networkBadge: {
     fontSize: 12,
     fontFamily: 'NotoSansJP-Medium',
@@ -940,5 +1049,167 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontSize: 12,
     fontFamily: 'NotoSansJP-Regular',
     flex: 1,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  walletBalanceSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingVertical: 20,
+  },
+  balanceLabel: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 8,
+  },
+  balanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontFamily: 'NotoSansJP-Bold',
+  },
+  balanceCurrency: {
+    fontSize: 18,
+    fontFamily: 'NotoSansJP-SemiBold',
+  },
+  balanceUsd: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  transactionPanel: {
+    marginBottom: 24,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  panelTitle: {
+    fontSize: 18,
+    fontFamily: 'NotoSansJP-SemiBold',
+    marginBottom: 16,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-Medium',
+    marginBottom: 8,
+  },
+  addressInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-Regular',
+    textAlignVertical: 'top',
+    minHeight: 60,
+  },
+  amountInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  amountInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  currencyLabel: {
+    fontSize: 16,
+    fontFamily: 'NotoSansJP-SemiBold',
+    paddingHorizontal: 8,
+  },
+  usdEquivalent: {
+    fontSize: 12,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  gasSettingsContainer: {
+    marginBottom: 20,
+  },
+  gasLabel: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-Medium',
+    marginBottom: 8,
+  },
+  gasOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  gasOption: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  selectedGasOption: {
+    // Additional styles applied inline
+  },
+  gasOptionText: {
+    fontSize: 12,
+    fontFamily: 'NotoSansJP-SemiBold',
+    marginBottom: 2,
+  },
+  gasOptionValue: {
+    fontSize: 10,
+    fontFamily: 'NotoSansJP-Regular',
+  },
+  transferButton: {
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  transferButtonText: {
+    fontSize: 16,
+    fontFamily: 'NotoSansJP-SemiBold',
+    color: '#fff',
+  },
+  monitorSection: {
+    marginBottom: 24,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  monitorStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  monitorStat: {
+    alignItems: 'center',
+  },
+  monitorStatLabel: {
+    fontSize: 10,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 4,
+  },
+  monitorStatValue: {
+    fontSize: 16,
+    fontFamily: 'NotoSansJP-Bold',
+  },
+  configureButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  configureButtonText: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-Medium',
   },
 });
