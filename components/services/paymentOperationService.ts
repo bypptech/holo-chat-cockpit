@@ -1,4 +1,4 @@
-import { HttpAgent } from '@dfinity/agent';
+import { AnonymousIdentity, HttpAgent, Identity } from '@dfinity/agent';
 import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
 import { Principal } from '@dfinity/principal';
 import BigNumber from "bignumber.js";
@@ -29,12 +29,26 @@ const supportedTokens:{[key:string]: Token} = {
   }
 };
 
-export interface GetBalanceResult {
+interface Result {
   success: boolean;
-  currency: string;
-  balance?: string;
   error?: string;
 }
+
+export interface GetBalanceResult extends Result {
+  currency: string;
+  balance?: string;
+}
+
+export interface TransferResult extends Result {
+  blockIndex?: bigint;
+}
+
+interface Prepared {
+  token: Token;
+  identity: Identity;
+  agent: HttpAgent;
+  ledger: IcrcLedgerCanister;
+};
 
 class PaymentOperationService {
   private static instance: PaymentOperationService;
@@ -51,19 +65,63 @@ class PaymentOperationService {
   }
 
   async getBalance(currency:string): Promise<GetBalanceResult> {
-    const token = supportedTokens[currency];
-    if (!token) {
+    try {
+      const { token, ledger, identity } = await this.prepare(currency);
+
+      // get balance of Owner
+      const balance:BigInt = await ledger.balance({
+        owner: identity.getPrincipal()
+      });
+
+      return {
+        success: true,
+        currency,
+        balance: PaymentOperationService.formatBalance(balance, token.decimal, token.digits)
+      }
+
+    } catch (e:any) {
       return {
         success: false,
         currency,
-        error: `${currency} not supporeted`,
+        error: e?.message
       };
+    }
+  }
+
+  async transfer(currency:string, to:Principal, amount:number): Promise<TransferResult> {
+    try {
+      const { token, identity, ledger } = await this.prepare(currency);
+      const blockIndex = await ledger.transfer({
+        to: {
+          owner: to,
+          subaccount:[]
+        },
+        amount: PaymentOperationService.toBingInt(amount, token.decimal)
+      });
+
+      return {
+        success: true,
+        blockIndex
+      };
+    } catch (e:any) {
+      return {
+        success: false,
+        error: e?.message
+      };
+    }
+  }
+
+  private async prepare(currency:string):Promise<Prepared> {
+    const token = supportedTokens[currency];
+    if (!token) {
+      throw new Error(`${currency} not supporeted`);
     }
 
     // Logic imported from driveOperationService#callBackendCanister()
     const { AuthClient } = await import('@dfinity/auth-client');
     const authClient = await AuthClient.create();
     const identity = authClient.getIdentity();
+
     const host = process.env.EXPO_PUBLIC_ICP_MAINNET_URL; // FIXME
     const agent = new HttpAgent({
       identity,
@@ -72,21 +130,21 @@ class PaymentOperationService {
     });
 
     // Target ledger canister
-    const ledgerCanister = IcrcLedgerCanister.create({
+    const ledger = IcrcLedgerCanister.create({
       agent: agent,
       canisterId: token.principal,
     });
 
-    // get balance of Owner
-    const balance:BigInt = await ledgerCanister.balance({
-      owner: identity.getPrincipal()
-    });
-
     return {
-      success: true,
-      currency,
-      balance: PaymentOperationService.formatBalance(balance, token.decimal, token.digits)
-    }
+      token,
+      identity,
+      agent,
+      ledger
+    };
+  }
+
+  static toBingInt(amount:number, decimal:number): bigint {
+    return BigInt(BigNumber(amount).shiftedBy(decimal).toFixed(0));
   }
 
   static formatBalance(balance:BigInt, decimal:number, digits:number): string {
