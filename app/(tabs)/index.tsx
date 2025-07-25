@@ -544,8 +544,11 @@ const createStyles = (colors: any, isDark: boolean, screenDimensions: any, isTab
 
   // Blockchain Connection
   blockchainSection: {
-    paddingHorizontal: isTablet ? 40 : isSmallScreen ? 16 : 20,
+    paddingHorizontal: 20,
     marginBottom: 24,
+    maxWidth: 1200,
+    width: '100%',
+    alignSelf: 'center',
   },
   blockchainCard: {
     borderRadius: 16,

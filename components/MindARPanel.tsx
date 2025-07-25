@@ -2,12 +2,25 @@ import React from "react";
 
 const MindARPanel: React.FC = () => {
   return (
-    <iframe
-      src="/ar.html" // publicディレクトリに配置
-      style={{ width: "100vw", height: "100vh", border: "none" }}
-      sandbox="allow-scripts allow-same-origin"
-      title="MindAR Example"
-    />
+    <div style={{ 
+      width: "100%", 
+      height: "calc(100vh - 120px)", 
+      maxWidth: 1200, 
+      margin: "0 auto",
+      paddingLeft: 20,
+      paddingRight: 20
+    }}>
+      <iframe
+        src="/ar.html"
+        style={{ 
+          width: "100%", 
+          height: "100%", 
+          border: "none" 
+        }}
+        sandbox="allow-scripts allow-same-origin"
+        title="MindAR Example"
+      />
+    </div>
   );
 };
 
