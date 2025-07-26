@@ -1,14 +1,24 @@
 # Holo Chat Cockpit 
+ICPプラットフォームを活用したIoTデバイスコントロールアプリです。  
+ボタン操作、AR、自然言語チャットを用い直感的な操作でIoTデバイスを制御できます。  
+また各種ICP制御機能を備え、現実世界のデバイスのRWA化を実現します。
 
-ICPプラットフォームを活用したIoTデバイスコントロールアプリです。
-ボタン操作、AR、チャットを用い直感的な操作でIoTデバイスを制御できます。
+[![](https://img.youtube.com/vi/5zZ-vlNl94I/0.jpg)](https://www.youtube.com/watch?v=5zZ-vlNl94I)
 
+
+## 機能
+
+* ARによる直感的なデバイス操作
+* AIを用いた自然言語チャットによるデバイス操作
+* Internet Identityによるユーザー認証
+* ICP,ckUSDCトークンでのデバイス操作権の管理
 
 ## 🚀 クイックスタート
 
 ### 前提条件
-- Node.js 18.0.0以上
+- Node.js 24.0.0以上
 - dfx 0.27.0 以上
+- git
 
 ### インストール
 
@@ -54,5 +64,5 @@ ICPプラットフォームを活用したIoTデバイスコントロールア�
 6. **トークン発行**
    開発環境でテスト用トークンを発行する場合、以下のコマンドを実行します
    ```bash
-   node test/mint.ts <principal> <currency> <amount>
+   node test/mint.ts <receive address> <currency> <amount>
    ```

@@ -1,13 +1,24 @@
-# Holo Chat Cockpit
 
+# Holo Chat Cockpit
 An IoT device control app utilizing the ICP platform.  
-You can intuitively control IoT devices using button operations, AR, and chat.
+You can intuitively control IoT devices using button operations, AR, and natural language chat.  
+It is also equipped with various ICP control functions, enabling the RWA (Real World Asset) of physical devices.
+
+[![](https://img.youtube.com/vi/5zZ-vlNl94I/0.jpg)](https://www.youtube.com/watch?v=5zZ-vlNl94I)
+
+## Features
+
+* Intuitive device control via AR
+* Device operation using AI-powered natural language chat
+* User authentication with Internet Identity
+* Management of device operation rights with ICP and ckUSDC tokens
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18.0.0 or higher
+- Node.js 24.0.0 or higher
 - dfx 0.27.0 or higher
+- git
 
 ### Installation
 
@@ -24,18 +35,18 @@ You can intuitively control IoT devices using button operations, AR, and chat.
 
 3. **Set up ICP local environment**
    ```bash
-   cd icp_canister
+   cd icp-canister
    dfx start --clean --background
    dfx deploy
    cd ..
    ```
-
+  
 4. **Set environment variables**
-   2.1 Create `.env` from the template
+   2.1 Create .env from the template
    ```bash
    cp .env.template .env
    ```
-   2.2 Edit `.env`
+   2.2 Edit .env
    ```env
    EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA="canister-id-here"
    EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA_SECRET_TOKEN="secret-token-here"
@@ -50,8 +61,8 @@ You can intuitively control IoT devices using button operations, AR, and chat.
    npx expo start --web
    ```
 
-6. **Mint tokens**
-   To issue a test token in the development environment, execute the following command.
+6. **Token minting**
+   To mint test tokens in the development environment, run the following command:
    ```bash
-   node test/mint.ts <principal> <currency> <amount>
+   node test/mint.ts <receive address> <currency> <amount>
    ```
