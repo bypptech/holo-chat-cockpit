@@ -3,7 +3,7 @@ ICPプラットフォームを活用したIoTデバイスコントロールア�
 ボタン操作、AR、自然言語チャットを用い直感的な操作でIoTデバイスを制御できます。  
 また各種ICP制御機能を備え、現実世界のデバイスのRWA化を実現します。
 
-[![](https://img.youtube.com/vi/5zZ-vlNl94I/0.jpg)](https://www.youtube.com/watch?v=5zZ-vlNl94I)
+[![](thumbnail.jpg)](https://www.youtube.com/watch?v=5zZ-vlNl94I)
 
 
 ## 機能

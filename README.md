@@ -4,7 +4,7 @@ An IoT device control app utilizing the ICP platform.
 You can intuitively control IoT devices using button operations, AR, and natural language chat.  
 It is also equipped with various ICP control functions, enabling the RWA (Real World Asset) of physical devices.
 
-[![](https://img.youtube.com/vi/5zZ-vlNl94I/0.jpg)](https://www.youtube.com/watch?v=5zZ-vlNl94I)
+[![](thumbnail.jpg)](https://www.youtube.com/watch?v=5zZ-vlNl94I)
 
 ## Features
 
