@@ -42,6 +42,13 @@ export interface GetBalanceResult extends Result {
 export interface TransferResult extends Result {
   blockIndex?: bigint;
 }
+export interface ApproveResult extends Result {
+  blockIndex?: bigint;
+}
+
+export interface AllowanceResult extends Result {
+  allowance?: string;
+}
 
 interface Prepared {
   token: Token;
@@ -76,7 +83,7 @@ class PaymentOperationService {
       return {
         success: true,
         currency,
-        balance: PaymentOperationService.formatBalance(balance, token.decimal, token.digits)
+        balance: this.formatBalance(balance, token.decimal, token.digits)
       }
 
     } catch (e:any) {
@@ -88,15 +95,92 @@ class PaymentOperationService {
     }
   }
 
-  async transfer(currency:string, to:Principal, amount:number): Promise<TransferResult> {
+  async transfer(currency:string, to:Principal, amount:number|BigNumber): Promise<TransferResult> {
     try {
-      const { token, identity, ledger } = await this.prepare(currency);
+      const { token, ledger } = await this.prepare(currency);
       const blockIndex = await ledger.transfer({
         to: {
           owner: to,
           subaccount:[]
         },
-        amount: PaymentOperationService.toBingInt(amount, token.decimal)
+        amount: this.toBingInt(amount, token.decimal)
+      });
+
+      return {
+        success: true,
+        blockIndex
+      };
+    } catch (e:any) {
+      return {
+        success: false,
+        error: e?.message
+      };
+    }
+  }
+
+  async approve(currency:string, to:Principal, amount:number|BigNumber, expiresMs?:number): Promise<ApproveResult> {
+    try {
+      const { token, identity, ledger } = await this.prepare(currency);
+      const blockIndex = await ledger.approve({
+        amount: this.toBingInt(amount, token.decimal),
+        spender: {
+          owner: to,
+          subaccount:[]
+        },
+        expires_at: expiresMs ? BigInt(Date.now()) + BigInt(expiresMs) * BigInt(1e6) : undefined,
+      });
+
+      return {
+        success: true,
+        blockIndex
+      };
+    } catch (e:any) {
+      return {
+        success: false,
+        error: e?.message
+      };
+    }
+  }
+
+  async allowance(currency:string, to:Principal): Promise<AllowanceResult> {
+    try {
+      const { token, identity, ledger } = await this.prepare(currency);
+      const result = await ledger.allowance({
+        account: {
+          owner: identity.getPrincipal(),
+          subaccount:[]
+        },
+        spender: {
+          owner: to,
+          subaccount:[]
+        }
+      });
+
+      return {
+        allowance: this.formatBalance(result.allowance, token.decimal, token.digits),
+        success: true,
+      };
+    } catch (e:any) {
+      return {
+        success: false,
+        error: e?.message
+      };
+    }
+  }
+
+  async transferFrom(currency:string, from:Principal, amount:number|BigNumber): Promise<TransferResult> {
+    try {
+      const { token, identity, ledger } = await this.prepare(currency);
+      const blockIndex = await ledger.transferFrom({
+        from: {
+          owner: from,
+          subaccount:[]
+        },
+        to: {
+          owner: identity.getPrincipal(),
+          subaccount:[]
+        },
+        amount: this.toBingInt(amount, token.decimal)
       });
 
       return {
@@ -143,11 +227,11 @@ class PaymentOperationService {
     };
   }
 
-  static toBingInt(amount:number, decimal:number): bigint {
+  toBingInt(amount:number|BigNumber, decimal:number): bigint {
     return BigInt(BigNumber(amount).shiftedBy(decimal).toFixed(0));
   }
 
-  static formatBalance(balance:BigInt, decimal:number, digits:number): string {
+  formatBalance(balance:BigInt, decimal:number, digits:number): string {
     return BigNumber(balance.toString()).shiftedBy(-decimal).toFixed(digits);
   }
 }
