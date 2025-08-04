@@ -118,13 +118,13 @@ class PaymentOperationService {
     }
   }
 
-  async approve(currency:string, to:Principal, amount:number|BigNumber, expiresMs?:number): Promise<ApproveResult> {
+  async approve(currency:string, spender:Principal, amount:number|BigNumber, expiresMs?:number): Promise<ApproveResult> {
     try {
       const { token, identity, ledger } = await this.prepare(currency);
       const blockIndex = await ledger.approve({
         amount: this.toBingInt(amount, token.decimal),
         spender: {
-          owner: to,
+          owner: spender,
           subaccount:[]
         },
         expires_at: expiresMs ? BigInt(Date.now()) + BigInt(expiresMs) * BigInt(1e6) : undefined,
@@ -142,7 +142,7 @@ class PaymentOperationService {
     }
   }
 
-  async allowance(currency:string, to:Principal): Promise<AllowanceResult> {
+  async allowance(currency:string, spender:Principal): Promise<AllowanceResult> {
     try {
       const { token, identity, ledger } = await this.prepare(currency);
       const result = await ledger.allowance({
@@ -151,7 +151,7 @@ class PaymentOperationService {
           subaccount:[]
         },
         spender: {
-          owner: to,
+          owner: spender,
           subaccount:[]
         }
       });
@@ -168,7 +168,7 @@ class PaymentOperationService {
     }
   }
 
-  async transferFrom(currency:string, from:Principal, amount:number|BigNumber): Promise<TransferResult> {
+  async transferFrom(currency:string, from:Principal, to:Principal, amount:number|BigNumber): Promise<TransferResult> {
     try {
       const { token, identity, ledger } = await this.prepare(currency);
       const blockIndex = await ledger.transferFrom({
@@ -177,7 +177,7 @@ class PaymentOperationService {
           subaccount:[]
         },
         to: {
-          owner: identity.getPrincipal(),
+          owner: to,
           subaccount:[]
         },
         amount: this.toBingInt(amount, token.decimal)
