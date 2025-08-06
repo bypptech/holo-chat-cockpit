@@ -3,10 +3,12 @@ import Time "mo:core/Time";
 import Text "mo:core/Text";
 import Array "mo:core/Array";
 import Int "mo:core/Int";
+import Iter "mo:core/Iter";
+import Map "mo:core/Map";
+import Principal "mo:core/Principal";
 import IC "ic:aaaaa-aa";
 
-persistent actor {
-
+shared ({caller = owner}) persistent actor class Backend() {
   var logs : [Text] = [];
 
   func addLog(timestamp : Int, response : Text) {
@@ -57,4 +59,110 @@ persistent actor {
     decoded_text;
   };
 
+  // payment
+  var paymentWallet : Principal = owner;
+
+  type Token = {
+    canisterId: Principal; // Ledger Canister Id
+    decimal: Nat8;
+    digits: Nat8;
+    fee: Nat; // transaction fee
+  };
+
+  type Price = {
+    price: Nat;
+    oldPrice: Nat;
+    lastUpdated: Int;
+  };
+
+   type PaymentInfo = {
+    paymentWallet: Principal;
+    tokens: [(Text, Token)];
+    prices: [(Text, Nat)];
+  };
+
+  transient let tokenMap = Map.fromIter<Text, Token>([
+    (
+      "ICP",
+      {
+        canisterId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+        decimal = 8 : Nat8;
+        digits = 4 : Nat8;
+        fee = 10_000; // 0.0001
+      }
+    ),
+    (
+      "ckUSDC",
+      {
+        canisterId = Principal.fromText("xevnm-gaaaa-aaaar-qafnq-cai");
+        decimal = 6 : Nat8;
+        digits = 2 : Nat8;
+        fee = 10_000; // 0.01
+      }
+    )
+  ].values(), Text.compare);
+
+  var priceMap = Map.fromIter<Text, Price>([
+    (
+      "ICP",
+      {
+        price = 20_000_000; // FIXME 0.2 ICP ($ 5 / ICP) on 2025/08/06
+        oldPrice = 20_000_000;
+        lastUpdated = 0 : Int;
+      },
+    ),
+    (
+      "ckUSDC",
+      {
+        price = 1_000_000; // 1.0
+        oldPrice = 1_000_000;
+        lastUpdated = 0 : Int;
+      }
+    )
+  ].values(), Text.compare);
+
+  public shared ({caller}) func setPaymentWallet(principal:Principal) : async Bool {
+    if (caller != owner) {
+      return false;
+    };
+    paymentWallet := principal;
+    return true;
+  };
+
+  public query func getPaymentInfo() : async PaymentInfo {
+    let prices : [(Text, Nat)] = Iter.toArray(
+      Iter.map<(Text, Price), (Text, Nat)>(
+        Map.entries(priceMap),
+        func ((k, v)) { (k, v.price) }
+      )
+    );
+
+    return {
+      paymentWallet;
+      tokens = Iter.toArray(Map.entries(tokenMap));
+      prices;
+    };
+  };
+
+  public shared ({caller}) func updatePrice(currency:Text, price:Nat) : async Bool {
+    if (caller != owner) {
+      return false;
+    };
+
+    let valueOpt = Map.get(priceMap, Text.compare, currency);
+    switch (valueOpt) {
+      case (?value) {
+        let newValue : Price = {
+          price;
+          oldPrice = value.price;
+          lastUpdated = Time.now();
+        };
+        ignore Map.replace(priceMap, Text.compare, currency, newValue);
+        return true;
+      };
+      case null {
+        return false;
+      };
+    };
+  };
 };
