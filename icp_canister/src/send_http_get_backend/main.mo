@@ -1,18 +1,17 @@
-import Blob "mo:base/Blob";
-import Cycles "mo:base/ExperimentalCycles";
-import Time "mo:base/Time";
-import Text "mo:base/Text";
-import Array "mo:base/Array";
-import Int "mo:base/Int";
+import Blob "mo:core/Blob";
+import Time "mo:core/Time";
+import Text "mo:core/Text";
+import Array "mo:core/Array";
+import Int "mo:core/Int";
 import IC "ic:aaaaa-aa";
 
-actor {
+persistent actor {
 
-  stable var logs : [Text] = [];
+  var logs : [Text] = [];
 
   func addLog(timestamp : Int, response : Text) {
     let entry = "timestamp: " # Int.toText(timestamp) # ", response: " # response;
-    logs := Array.append(logs, [entry]);
+    logs := Array.concat(logs, [entry]);
   };
 
   public query func getLogs() : async [Text] {
@@ -43,11 +42,10 @@ actor {
         function = transform;
         context = Blob.fromArray([]);
       };
+      is_replicated = ?false;
     };
 
-    Cycles.add<system>(230_949_972_000);
-
-    let http_response : IC.http_request_result = await IC.http_request(http_request);
+    let http_response : IC.http_request_result = await (with cycles = 230_949_972_000) IC.http_request(http_request);
 
     let decoded_text : Text = switch (Text.decodeUtf8(http_response.body)) {
       case (null) { "No value returned" };
