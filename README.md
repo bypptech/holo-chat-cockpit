@@ -17,7 +17,8 @@ It is also equipped with various ICP control functions, enabling the RWA (Real W
 
 ### Prerequisites
 - Node.js 24.0.0 or higher
-- dfx 0.27.0 or higher
+- dfx 0.28.0 or higher
+- mops 1.11.0 or higher
 - git
 
 ### Installation
@@ -31,6 +32,7 @@ It is also equipped with various ICP control functions, enabling the RWA (Real W
 2. **Install dependencies**
    ```bash
    npm install
+   mops install
    ```
 
 3. **Set up ICP local environment**
