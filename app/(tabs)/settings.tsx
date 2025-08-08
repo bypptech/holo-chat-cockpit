@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { createTabStyles } from './styles';
 import { 
   Bell, 
   Eye, 
@@ -546,7 +547,8 @@ export default function SettingsScreen() {
     </View>
   );
 
-  const styles = createStyles(colors, isDark);
+  const allStyles = createTabStyles(colors, isDark);
+  const styles = { ...allStyles.common, ...allStyles.settings };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -576,155 +578,3 @@ export default function SettingsScreen() {
   );
 }
 
-const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  contentWrapper: {
-    flex: 1,
-    maxWidth: 1200,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'NotoSansJP-Bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-Regular',
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginBottom: 12,
-  },
-  sectionContent: {
-    gap: 4, // Reduced from 12 to 4 for tighter spacing
-  },
-  settingButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    minHeight: 72, // Fixed height for all buttons
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  settingInfo: {
-    flex: 1,
-    justifyContent: 'center', // Center content vertically
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginBottom: 2,
-  },
-  settingSubtitle: {
-    fontSize: 13, // Reduced from 14 to 13
-    fontFamily: 'NotoSansJP-Regular',
-    lineHeight: 16, // Reduced line height
-  },
-  settingRight: {
-    marginLeft: 16,
-  },
-  
-  // Theme and Language Selectors
-  selector: {
-    marginHorizontal: 0,
-    marginTop: 4,
-    marginBottom: 0,
-    borderRadius: 12,
-    padding: 16,
-  },
-  selectorOptions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  selectorOption: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 8,
-  },
-  selectorOptionText: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-Medium',
-  },
-  languageGrid: {
-    gap: 8,
-  },
-  languageOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  languageText: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-Medium',
-  },
-  
-  versionInfo: {
-    marginBottom: 32,
-  },
-  versionCard: {
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  versionText: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginBottom: 4,
-  },
-  versionSubtext: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-Regular',
-  },
-});

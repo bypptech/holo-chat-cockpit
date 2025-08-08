@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Shield } from 'lucide-react-native';
@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import MindARPanel from '@/components/MindARPanel';
 import ICPLoginRequire from '@/components/auth/icp-login-require';
+import { createTabStyles } from './styles';
 
 export default function MindAROnlyScreen() {
   const { isDark, colors } = useTheme();
@@ -24,7 +25,8 @@ export default function MindAROnlyScreen() {
     }
   };
 
-  const styles = createStyles(colors, isDark);
+  const allStyles = createTabStyles(colors, isDark);
+  const styles = { ...allStyles.common, ...allStyles.ar };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -78,50 +80,3 @@ export default function MindAROnlyScreen() {
   );
 }
 
-const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  contentWrapper: {
-    flex: 1,
-    maxWidth: 1200,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-  },
-  headerContent: {
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'NotoSansJP-Bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-Regular',
-    lineHeight: 20,
-  },
-  authStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  authBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  authText: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-SemiBold',
-  },
-});
