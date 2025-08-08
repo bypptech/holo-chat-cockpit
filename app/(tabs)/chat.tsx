@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield, Infinity } from 'lucide-react-native';
+import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
@@ -24,6 +24,7 @@ interface ChatSession {
 }
 import { ConfirmationPanel } from '@/components/ConfirmationPanel';
 import { InlineChatPanel } from '@/components/InlineChatPanel';
+import ICPLoginRequire from '@/components/auth/icp-login-require';
 
 interface Message {
   id: string;
@@ -57,7 +58,7 @@ interface AvailableFeature {
 export default function CCCChatScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useLanguage();
-  const { isAuthenticated, principal, login, logout, isLoading: authLoading } = useInternetIdentity();
+  const { isAuthenticated, principal, logout } = useInternetIdentity();
   const { getChatEnabledDevices } = useChatDevice();
   const router = useRouter(); 
 
@@ -876,32 +877,11 @@ export default function CCCChatScreen() {
         </View>
 
         {!isAuthenticated ? (
-          /* Login Required Message */
-          <View style={styles.loginRequiredContainer}>
-            <BlurView
-              intensity={isDark ? 80 : 60}
-              tint={isDark ? "dark" : "light"}
-              style={styles.loginRequiredBlur}
-            >
-              <Infinity size={48} color={isDark ? "#fff" : colors.primary} />
-              <Text style={[styles.loginRequiredTitle, { color: colors.text }]}>
-                {t('chat:session.loginRequired')}
-              </Text>
-              <TouchableOpacity
-                style={[styles.loginButton, { backgroundColor: colors.primary }]}
-                onPress={handleLogin}
-                disabled={authLoading}
-              >
-                {authLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.loginButtonText}>
-                    {t('chat:session.loginButton')}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </BlurView>
-          </View>
+          <ICPLoginRequire 
+            titleKey={t('chat:session.loginRequired')}
+            buttonKey={t('chat:session.loginButton')}
+            onCustomLogin={handleLogin}
+          />
         ) : (
           <>
             <View style={styles.featuresSection}>
@@ -1263,36 +1243,5 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-  },
-  loginRequiredContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loginRequiredBlur: {
-    borderRadius: 20,
-    padding: 40,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  loginRequiredTitle: {
-    fontSize: 20,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginTop: 16,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  loginButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-SemiBold',
-    color: '#fff',
   },
 });

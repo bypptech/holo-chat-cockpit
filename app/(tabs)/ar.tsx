@@ -1,19 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { Infinity, Shield } from 'lucide-react-native';
+import { Shield } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import MindARPanel from '@/components/MindARPanel';
+import ICPLoginRequire from '@/components/auth/icp-login-require';
 
 export default function MindAROnlyScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useTranslation();
-  const { isAuthenticated, login, isLoading: authLoading } = useInternetIdentity();
+  const { isAuthenticated } = useInternetIdentity();
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -64,32 +64,11 @@ export default function MindAROnlyScreen() {
           </View>
 
           {!isAuthenticated ? (
-            /* Login Required */
-            <View style={styles.loginRequiredContainer}>
-              <BlurView
-                intensity={isDark ? 80 : 60}
-                tint={isDark ? "dark" : "light"}
-                style={styles.loginRequiredBlur}
-              >
-                <Infinity size={48} color={isDark ? "#fff" : colors.primary} />
-                <Text style={[styles.loginRequiredTitle, { color: colors.text }]}>
-                  {t('ar:loginRequired')}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.loginButton, { backgroundColor: colors.primary }]}
-                  onPress={handleLogin}
-                  disabled={authLoading}
-                >
-                  {authLoading ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text style={styles.loginButtonText}>
-                      {t('ar:loginButton')}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </BlurView>
-            </View>
+            <ICPLoginRequire 
+              titleKey={t('ar:loginRequired')}
+              buttonKey={t('ar:loginButton')}
+              onCustomLogin={handleLogin}
+            />
           ) : (
             <MindARPanel />
           )}
@@ -144,36 +123,5 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   authText: {
     fontSize: 12,
     fontFamily: 'NotoSansJP-SemiBold',
-  },
-  loginRequiredContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loginRequiredBlur: {
-    borderRadius: 20,
-    padding: 40,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  loginRequiredTitle: {
-    fontSize: 20,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginTop: 16,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  loginButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-SemiBold',
-    color: '#fff',
   },
 });

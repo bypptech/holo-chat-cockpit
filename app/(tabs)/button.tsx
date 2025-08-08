@@ -24,14 +24,14 @@ import {
   Settings,
   Clock,
   CheckCircle,
-  AlertCircle,
-  Infinity
+  AlertCircle
 } from 'lucide-react-native';
+import ICPLoginRequire from '@/components/auth/icp-login-require';
 
 export default function TouchUIScreen() {
   const { t } = useTranslation();
   const { isDark, colors } = useTheme();
-  const { isAuthenticated, principal, login, logout, isLoading: authLoading } = useInternetIdentity();
+  const { isAuthenticated, principal } = useInternetIdentity();
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
   const router = useRouter(); 
   // Device operation states
@@ -53,7 +53,6 @@ export default function TouchUIScreen() {
 
   // Responsive breakpoints
   const isTablet = screenDimensions.width >= 768;
-  const isLargeScreen = screenDimensions.width >= 1024;
   const isSmallScreen = screenDimensions.width < 480;
 
   // Get responsive styles
@@ -72,16 +71,6 @@ export default function TouchUIScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setLastResult(null);
-      setOperationStatus('idle');
-      setCountdown(null);
-    } catch (error) {
-      Alert.alert('Logout Failed', error instanceof Error ? error.message : 'Unknown error');
-    }
-  };
 
   const handleDeviceAction = async () => {
     if (!isAuthenticated || !principal) {
@@ -148,6 +137,9 @@ export default function TouchUIScreen() {
   };
 
   const styles = createStyles(colors, isDark);
+  // Suppress unused variable warnings
+  void colors;
+  void isDark;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -201,32 +193,11 @@ export default function TouchUIScreen() {
             showsVerticalScrollIndicator={false}
           >
             {!isAuthenticated ? (
-              /* Login Required */
-              <View style={styles.loginRequiredContainer}>
-                <BlurView
-                  intensity={isDark ? 80 : 60}
-                  tint={isDark ? "dark" : "light"}
-                  style={styles.loginRequiredBlur}
-                >
-                  <Infinity size={48} color={isDark ? "#fff" : colors.primary} />
-                  <Text style={[styles.loginRequiredTitle, { color: colors.text }]}>
-                    {t('button:session.loginRequired')}
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.loginButton, { backgroundColor: colors.primary }]}
-                    onPress={handleLogin}
-                    disabled={authLoading}
-                  >
-                    {authLoading ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <Text style={styles.loginButtonText}>
-                        {t('button:session.loginButton')}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </BlurView>
-              </View>
+              <ICPLoginRequire 
+                titleKey={t('button:session.loginRequired')}
+                buttonKey={t('button:session.loginButton')}
+                onCustomLogin={handleLogin}
+              />
             ) : (
               <>
                 {/* Device Control Card */}
@@ -394,37 +365,6 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  loginRequiredContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loginRequiredBlur: {
-    borderRadius: 20,
-    padding: 40,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  loginRequiredTitle: {
-    fontSize: 20,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginTop: 16,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  loginButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-SemiBold',
-    color: '#fff',
   },
   controlCard: {
     borderRadius: 20,
