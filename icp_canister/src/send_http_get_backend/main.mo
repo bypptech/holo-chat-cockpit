@@ -7,6 +7,7 @@ import Iter "mo:core/Iter";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
 import IC "ic:aaaaa-aa";
+import Ledger "ledger";
 
 shared ({caller = owner}) persistent actor class Backend() {
   var logs : [Text] = [];
@@ -149,19 +150,47 @@ shared ({caller = owner}) persistent actor class Backend() {
       return false;
     };
 
-    let valueOpt = Map.get(priceMap, Text.compare, currency);
-    switch (valueOpt) {
-      case (?value) {
-        let newValue : Price = {
-          price;
-          oldPrice = value.price;
-          lastUpdated = Time.now();
-        };
-        ignore Map.replace(priceMap, Text.compare, currency, newValue);
-        return true;
+    let ?value = Map.get(priceMap, Text.compare, currency)  else return false;
+    let newValue : Price = {
+      price;
+      oldPrice = value.price;
+      lastUpdated = Time.now();
+    };
+    ignore Map.replace(priceMap, Text.compare, currency, newValue);
+    return true;
+  };
+
+  type PayResult = {
+    #Ok : Nat;
+    #Err : Text;
+  };
+
+  func pay(currency:Text, from:Principal) : async PayResult {
+    let ?token = Map.get(tokenMap, Text.compare, currency) else return #Err("Unsupported Currency");
+    let ?price = Map.get(priceMap, Text.compare, currency) else return #Err("Price not specified");
+    let ledger = actor(Principal.toText(token.canisterId)) : Ledger.Service;
+ 
+    let result = await ledger.icrc2_transfer_from({
+      from = {
+        owner = from;
+        subaccount = null;
       };
-      case null {
-        return false;
+      to = {
+        owner = paymentWallet;
+        subaccount = null;
+      };
+      amount = price.price - token.fee;
+      created_at_time = null;
+      fee = null;
+      memo = null;
+      spender_subaccount = null;
+    });
+    switch (result) {
+      case (#Ok(blockIndex)) {
+        return #Ok(blockIndex);
+      };
+      case (#Err(error)) {
+        return #Err(debug_show(error)); // TODO Error message
       };
     };
   };
