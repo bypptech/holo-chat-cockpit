@@ -111,12 +111,12 @@ export default function ControllerScreen() {
     setGasFee(paymentService.getFee(currency));
     setBalance("");
     if (icpAuthenticated && userPrincipal) {
-      new Promise(async ()=>{
-        const result = await paymentService.getBalance(currency);
+      new Promise(async () => {
+        const result = await paymentService.getBalance(currency, selectedNetwork);
         if (result.success && balanceCurrency == currency) {
           setBalance(result.balance!);
         }
-      }).catch(()=>{
+      }).catch(() => {
         // TODO error handling
       });
     }

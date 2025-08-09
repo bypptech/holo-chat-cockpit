@@ -1,5 +1,6 @@
 import { HttpAgent, Actor, ActorSubclass } from '@dfinity/agent';
 import { IDL } from '@dfinity/candid';
+import { getGlobalSessionNetwork } from '../auth/ICPAuth';
 
 // ICP Canister IDL for gacha drive operations
 const idlFactory = ({ IDL }: { IDL: any }) => {
@@ -52,8 +53,11 @@ class DriveOperationService {
     callbacks?.onStart?.();
 
     try {
-      // Call the backend canister
-      const canisterResponse = await this.callBackendCanister(token);
+      // Get current login session network from ICPAuth
+      const currentNetwork = getGlobalSessionNetwork();
+      
+      // Call the backend canister with the appropriate network
+      const canisterResponse = await this.callBackendCanister(token, currentNetwork);
       
       // Start 10-second countdown
       await this.startCountdown(callbacks);
@@ -81,9 +85,13 @@ class DriveOperationService {
     }
   }
 
-  private async callBackendCanister(text: string): Promise<string> {
-    const CANISTER_ID = process.env.EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA;
-    
+  private async callBackendCanister(text: string, network: 'local' | 'mainnet' = 'mainnet'): Promise<string> {
+    let CANISTER_ID: string | undefined;
+    if (network === 'mainnet') {
+      CANISTER_ID = process.env.EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA;
+    } else {
+      CANISTER_ID = process.env.EXPO_PUBLIC_ICP_LOCAL_CANISTER_ID_DRIVE_GACHA;
+    }
     if (!CANISTER_ID) {
       throw new Error('Drive gacha canister ID not configured');
     }
@@ -93,12 +101,24 @@ class DriveOperationService {
     const authClient = await AuthClient.create();
     const identity = authClient.getIdentity();
 
+
+    let host;
+    if (network === 'mainnet') {
+      host = process.env.EXPO_PUBLIC_ICP_MAINNET_URL;
+    } else {
+      host = process.env.EXPO_PUBLIC_ICP_LOCAL_URL;
+    }
+
     // Create the agent
     const agent = new HttpAgent({
       identity,
-      host: process.env.EXPO_PUBLIC_ICP_MAINNET_URL,
+      host,
+      shouldFetchRootKey: (network === 'local'),
     });
-
+    
+    if (network === 'local') {
+      await agent.fetchRootKey();
+    }
     // Create the actor
     const actor: ActorSubclass = Actor.createActor(idlFactory, {
       agent: agent!,

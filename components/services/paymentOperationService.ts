@@ -2,6 +2,7 @@ import { AnonymousIdentity, HttpAgent, Identity } from '@dfinity/agent';
 import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
 import { Principal } from '@dfinity/principal';
 import BigNumber from "bignumber.js";
+import { getGlobalSessionNetwork } from '../auth/ICPAuth';
 
 export interface Token {
   symbol: string;
@@ -71,12 +72,13 @@ class PaymentOperationService {
     return supportedTokens[currency]?.fee ?? "";
   }
 
-  async getBalance(currency:string): Promise<GetBalanceResult> {
+  async getBalance(currency: string, network?: 'local' | 'mainnet'): Promise<GetBalanceResult> {
     try {
-      const { token, ledger, identity } = await this.prepare(currency);
+      const currentNetwork = network || getGlobalSessionNetwork();
+      const { token, ledger, identity } = await this.prepare(currency, currentNetwork);
 
       // get balance of Owner
-      const balance:BigInt = await ledger.balance({
+      const balance: BigInt = await ledger.balance({
         owner: identity.getPrincipal()
       });
 
@@ -86,7 +88,7 @@ class PaymentOperationService {
         balance: this.formatBalance(balance, token.decimal, token.digits)
       }
 
-    } catch (e:any) {
+    } catch (e: any) {
       return {
         success: false,
         currency,
@@ -97,7 +99,8 @@ class PaymentOperationService {
 
   async transfer(currency:string, to:Principal, amount:number|BigNumber): Promise<TransferResult> {
     try {
-      const { token, ledger } = await this.prepare(currency);
+      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
+      const { token, ledger } = await this.prepare(currency, currentNetwork);
       const blockIndex = await ledger.transfer({
         to: {
           owner: to,
@@ -120,7 +123,8 @@ class PaymentOperationService {
 
   async approve(currency:string, spender:Principal, amount:number|BigNumber, expiresMs?:number): Promise<ApproveResult> {
     try {
-      const { token, identity, ledger } = await this.prepare(currency);
+      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
+      const { token, identity, ledger } = await this.prepare(currency, currentNetwork);
       const blockIndex = await ledger.approve({
         amount: this.toBingInt(amount, token.decimal),
         spender: {
@@ -144,7 +148,8 @@ class PaymentOperationService {
 
   async allowance(currency:string, spender:Principal): Promise<AllowanceResult> {
     try {
-      const { token, identity, ledger } = await this.prepare(currency);
+      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
+      const { token, identity, ledger } = await this.prepare(currency, currentNetwork);
       const result = await ledger.allowance({
         account: {
           owner: identity.getPrincipal(),
@@ -170,7 +175,8 @@ class PaymentOperationService {
 
   async transferFrom(currency:string, from:Principal, to:Principal, amount:number|BigNumber): Promise<TransferResult> {
     try {
-      const { token, identity, ledger } = await this.prepare(currency);
+      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
+      const { token, identity, ledger } = await this.prepare(currency, currentNetwork);
       const blockIndex = await ledger.transferFrom({
         from: {
           owner: from,
@@ -195,7 +201,7 @@ class PaymentOperationService {
     }
   }
 
-  private async prepare(currency:string):Promise<Prepared> {
+  private async prepare(currency: string, network: 'local' | 'mainnet' = 'mainnet'): Promise<Prepared> {
     const token = supportedTokens[currency];
     if (!token) {
       throw new Error(`${currency} not supporeted`);
@@ -206,12 +212,22 @@ class PaymentOperationService {
     const authClient = await AuthClient.create();
     const identity = authClient.getIdentity();
 
-    const host = process.env.EXPO_PUBLIC_ICP_MAINNET_URL; // FIXME
+    let host;
+    if (network === 'mainnet') {
+      host = process.env.EXPO_PUBLIC_ICP_MAINNET_URL;
+    } else {
+      host = process.env.EXPO_PUBLIC_ICP_LOCAL_URL;
+    }
+
     const agent = new HttpAgent({
       identity,
       host,
-      shouldFetchRootKey: (host != "https://ic0.app"), // true if local
+      shouldFetchRootKey: (network === 'local'),
     });
+
+    if (network === 'local') {
+      await agent.fetchRootKey();
+    }
 
     // Target ledger canister
     const ledger = IcrcLedgerCanister.create({
