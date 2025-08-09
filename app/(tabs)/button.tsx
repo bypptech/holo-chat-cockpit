@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
-  StyleSheet, 
+ 
   TouchableOpacity, 
   Dimensions,
   ScrollView,
@@ -24,14 +24,15 @@ import {
   Settings,
   Clock,
   CheckCircle,
-  AlertCircle,
-  Infinity
+  AlertCircle
 } from 'lucide-react-native';
+import ICPLoginRequire from '@/components/auth/icp-login-require';
+import { createTabStyles } from './styles';
 
 export default function TouchUIScreen() {
   const { t } = useTranslation();
   const { isDark, colors } = useTheme();
-  const { isAuthenticated, principal, login, logout, isLoading: authLoading } = useInternetIdentity();
+  const { isAuthenticated, principal } = useInternetIdentity();
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
   const router = useRouter(); 
   // Device operation states
@@ -53,7 +54,6 @@ export default function TouchUIScreen() {
 
   // Responsive breakpoints
   const isTablet = screenDimensions.width >= 768;
-  const isLargeScreen = screenDimensions.width >= 1024;
   const isSmallScreen = screenDimensions.width < 480;
 
   // Get responsive styles
@@ -72,16 +72,6 @@ export default function TouchUIScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setLastResult(null);
-      setOperationStatus('idle');
-      setCountdown(null);
-    } catch (error) {
-      Alert.alert('Logout Failed', error instanceof Error ? error.message : 'Unknown error');
-    }
-  };
 
   const handleDeviceAction = async () => {
     if (!isAuthenticated || !principal) {
@@ -147,7 +137,11 @@ export default function TouchUIScreen() {
     }
   };
 
-  const styles = createStyles(colors, isDark);
+  const allStyles = createTabStyles(colors, isDark);
+  const styles = { ...allStyles.common, ...allStyles.button };
+  // Suppress unused variable warnings
+  void colors;
+  void isDark;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -201,32 +195,11 @@ export default function TouchUIScreen() {
             showsVerticalScrollIndicator={false}
           >
             {!isAuthenticated ? (
-              /* Login Required */
-              <View style={styles.loginRequiredContainer}>
-                <BlurView
-                  intensity={isDark ? 80 : 60}
-                  tint={isDark ? "dark" : "light"}
-                  style={styles.loginRequiredBlur}
-                >
-                  <Infinity size={48} color={isDark ? "#fff" : colors.primary} />
-                  <Text style={[styles.loginRequiredTitle, { color: colors.text }]}>
-                    {t('button:session.loginRequired')}
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.loginButton, { backgroundColor: colors.primary }]}
-                    onPress={handleLogin}
-                    disabled={authLoading}
-                  >
-                    {authLoading ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <Text style={styles.loginButtonText}>
-                        {t('button:session.loginButton')}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </BlurView>
-              </View>
+              <ICPLoginRequire 
+                titleKey={t('button:session.loginRequired')}
+                buttonKey={t('button:session.loginButton')}
+                onCustomLogin={handleLogin}
+              />
             ) : (
               <>
                 {/* Device Control Card */}
@@ -348,166 +321,3 @@ export default function TouchUIScreen() {
   );
 }
 
-const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  contentWrapper: {
-    flex: 1,
-    maxWidth: 1200,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-  },
-  headerContent: {
-    marginBottom: 12,
-  },
-  title: {
-    fontFamily: 'NotoSansJP-Bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontFamily: 'NotoSansJP-Regular',
-    lineHeight: 20,
-  },
-  authStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  authBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  authText: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-SemiBold',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  loginRequiredContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loginRequiredBlur: {
-    borderRadius: 20,
-    padding: 40,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  loginRequiredTitle: {
-    fontSize: 20,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginTop: 16,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  loginButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-SemiBold',
-    color: '#fff',
-  },
-  controlCard: {
-    borderRadius: 20,
-    marginBottom: 24,
-    overflow: 'hidden',
-  },
-  controlHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  controlTitle: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginLeft: 8,
-  },
-  driveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    gap: 12,
-    marginBottom: 16,
-  },
-  driveButtonText: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-    color: '#fff',
-  },
-  countdownText: {
-    fontSize: 24,
-    fontFamily: 'NotoSansJP-Bold',
-  },
-  statusContainer: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statusTitle: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginLeft: 8,
-  },
-  statusText: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-Regular',
-    lineHeight: 16,
-  },
-  infoCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginLeft: 8,
-  },
-  infoList: {
-    gap: 16,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  infoLabel: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-Regular',
-  },
-  infoValue: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-Medium',
-  },
-});

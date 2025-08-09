@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
+import { createTabStyles } from './styles';
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield, Infinity } from 'lucide-react-native';
+import { Send, Bot, User, Smartphone, Settings as SettingsIcon, Shield } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
@@ -24,6 +25,7 @@ interface ChatSession {
 }
 import { ConfirmationPanel } from '@/components/ConfirmationPanel';
 import { InlineChatPanel } from '@/components/InlineChatPanel';
+import ICPLoginRequire from '@/components/auth/icp-login-require';
 
 interface Message {
   id: string;
@@ -57,7 +59,7 @@ interface AvailableFeature {
 export default function CCCChatScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useLanguage();
-  const { isAuthenticated, principal, login, logout, isLoading: authLoading } = useInternetIdentity();
+  const { isAuthenticated, principal, logout } = useInternetIdentity();
   const { getChatEnabledDevices } = useChatDevice();
   const router = useRouter(); 
 
@@ -837,7 +839,8 @@ export default function CCCChatScreen() {
     setPendingCommand(null);
   };
 
-  const styles = createStyles(colors, isDark);
+  const allStyles = createTabStyles(colors, isDark);
+  const styles = { ...allStyles.common, ...allStyles.chat };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -876,32 +879,11 @@ export default function CCCChatScreen() {
         </View>
 
         {!isAuthenticated ? (
-          /* Login Required Message */
-          <View style={styles.loginRequiredContainer}>
-            <BlurView
-              intensity={isDark ? 80 : 60}
-              tint={isDark ? "dark" : "light"}
-              style={styles.loginRequiredBlur}
-            >
-              <Infinity size={48} color={isDark ? "#fff" : colors.primary} />
-              <Text style={[styles.loginRequiredTitle, { color: colors.text }]}>
-                {t('chat:session.loginRequired')}
-              </Text>
-              <TouchableOpacity
-                style={[styles.loginButton, { backgroundColor: colors.primary }]}
-                onPress={handleLogin}
-                disabled={authLoading}
-              >
-                {authLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.loginButtonText}>
-                    {t('chat:session.loginButton')}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </BlurView>
-          </View>
+          <ICPLoginRequire 
+            titleKey={t('chat:session.loginRequired')}
+            buttonKey={t('chat:session.loginButton')}
+            onCustomLogin={handleLogin}
+          />
         ) : (
           <>
             <View style={styles.featuresSection}>
@@ -979,320 +961,3 @@ export default function CCCChatScreen() {
   );
 }
 
-const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  contentWrapper: {
-    flex: 1,
-    maxWidth: 1200,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-  },
-  headerContent: {
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'NotoSansJP-Bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-Regular',
-    lineHeight: 20,
-  },
-  authStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  authBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  authText: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-SemiBold',
-  },
-  featuresSection: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginBottom: 12,
-  },
-  featuresScroll: {
-    flexDirection: 'row',
-  },
-  featureCard: {
-    marginRight: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    width: 200,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  featureBlur: {
-    padding: 16,
-  },
-  featureHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  featureIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedBadgeText: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-Bold',
-    color: '#fff',
-  },
-  featureName: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginBottom: 8,
-  },
-  featureDescription: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-Regular',
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  operationsContainer: {
-    marginTop: 8,
-  },
-  operationsLabel: {
-    fontSize: 10,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginBottom: 4,
-  },
-  operationsList: {
-    fontSize: 10,
-    fontFamily: 'NotoSansJP-Regular',
-  },
-  selectedFeatureSection: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  selectedFeatureCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  selectedFeatureText: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-SemiBold',
-  },
-  changeFeatureButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  changeFeatureText: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-SemiBold',
-  },
-  chatContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  messagesContainer: {
-    flex: 1,
-    marginBottom: 16,
-  },
-  messageContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    alignItems: 'flex-start',
-  },
-  userMessage: {
-    justifyContent: 'flex-end',
-  },
-  botMessage: {
-    justifyContent: 'flex-start',
-  },
-  botAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    marginTop: 4,
-  },
-  userAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-    marginTop: 4,
-  },
-  messageContent: {
-    flex: 1,
-    maxWidth: '75%',
-  },
-  messageBlur: {
-    borderRadius: 16,
-    padding: 12,
-    overflow: 'hidden',
-  },
-  userMessageBlur: {},
-  botMessageBlur: {},
-  messageText: {
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-Regular',
-    lineHeight: 22,
-  },
-  operationData: {
-    marginTop: 8,
-    padding: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  operationLabel: {
-    fontSize: 10,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginBottom: 2,
-  },
-  operationDetails: {
-    fontSize: 10,
-    fontFamily: 'NotoSansJP-Regular',
-  },
-  messageFooter: {
-    marginTop: 4,
-  },
-  timestamp: {
-    fontSize: 10,
-    fontFamily: 'NotoSansJP-Regular',
-  },
-  typingIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginBottom: 16,
-  },
-  typingBlur: {
-    borderRadius: 16,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  typingDots: {
-    flexDirection: 'row',
-    marginRight: 8,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginHorizontal: 2,
-  },
-  dot1: {
-    opacity: 0.4,
-  },
-  dot2: {
-    opacity: 0.7,
-  },
-  dot3: {
-    opacity: 1,
-  },
-  typingText: {
-    fontSize: 12,
-    fontFamily: 'NotoSansJP-Regular',
-  },
-  inputContainer: {
-    borderRadius: 12,
-    paddingTop: 16,
-    paddingBottom: 16,
-    paddingLeft: 16,
-    paddingRight: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-    marginBottom: 20,
-    marginLeft: 16,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'NotoSansJP-Regular',
-    maxHeight: 80,
-    paddingVertical: 8,
-    paddingLeft: 16,
-    paddingRight: 8,
-  },
-  sendButton:{
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  loginRequiredContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loginRequiredBlur: {
-    borderRadius: 20,
-    padding: 40,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  loginRequiredTitle: {
-    fontSize: 20,
-    fontFamily: 'NotoSansJP-SemiBold',
-    marginTop: 16,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  loginButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    fontSize: 14,
-    fontFamily: 'NotoSansJP-SemiBold',
-    color: '#fff',
-  },
-});
