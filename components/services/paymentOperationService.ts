@@ -49,7 +49,7 @@ class PaymentOperationService {
     return PaymentOperationService.instance;
   }
 
-  private isMainnet = true;
+  private isMainnet?:boolean;
 
   private tokens:{[key:string]: Token} = {};
 
@@ -63,7 +63,7 @@ class PaymentOperationService {
    */
   async setNetwork(network: "mainnet"|"local") {
     const isMainnet = network == "mainnet";
-    if (this.isMainnet == isMainnet) {
+    if (this.isMainnet === isMainnet) {
       // no change
     }
 
