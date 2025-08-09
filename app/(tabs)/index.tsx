@@ -55,11 +55,8 @@ export default function ControllerScreen() {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [gasFee, setGasFee] = useState('');
-
+  const [totalAmount, setTotalAmount] = useState("");
   const paymentService = PaymentOperationService.getInstance();
-
-  // Calculate total amount
-  const totalAmount = (parseFloat(transferAmount || '0') + parseFloat(gasFee || '0')).toFixed(2);
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -108,11 +105,19 @@ export default function ControllerScreen() {
   // Update balance
   useEffect(() => {
     const currency = balanceCurrency;
-    setGasFee(paymentService.getFee(currency));
+    setRecipientAddress("");
+    setTransferAmount("");
+    setGasFee("");
+    setTotalAmount("");
     setBalance("");
     if (icpAuthenticated && userPrincipal) {
       new Promise(async () => {
-        const result = await paymentService.getBalance(currency, selectedNetwork);
+        await paymentService.setNetwork(selectedNetwork);
+        setRecipientAddress(paymentService.getPaymentAddress());
+        setTransferAmount(paymentService.getPrice(currency));
+        setGasFee(paymentService.getFee(currency));
+        setTotalAmount(paymentService.getTotalAmount(currency));
+        const result = await paymentService.getBalance(currency);
         if (result.success && balanceCurrency == currency) {
           setBalance(result.balance!);
         }

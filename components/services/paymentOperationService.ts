@@ -1,34 +1,15 @@
-import { AnonymousIdentity, HttpAgent, Identity } from '@dfinity/agent';
+import { Actor, HttpAgent, Identity } from '@dfinity/agent';
 import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
 import { Principal } from '@dfinity/principal';
 import BigNumber from "bignumber.js";
-import { getGlobalSessionNetwork } from '../auth/ICPAuth';
 
 export interface Token {
-  symbol: string;
-  principal: Principal;
+  canisterId: Principal;
   decimal: number;
   digits: number;
-  fee: string;
+  fee: bigint;
 }
 
-// TODO: get information from ledger canister: icrc_metadata()
-const supportedTokens:{[key:string]: Token} = {
-  "ICP": {
-    symbol: "ICP",
-    principal: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
-    decimal: 8,
-    digits: 4,
-    fee: "0.0001",
-  },
-  "ckUSDC": {
-    symbol: "ckUSDC",
-    principal: Principal.fromText("xevnm-gaaaa-aaaar-qafnq-cai"),
-    decimal: 6,
-    digits: 2,
-    fee: "0.01"
-  }
-};
 
 interface Result {
   success: boolean;
@@ -68,14 +49,98 @@ class PaymentOperationService {
     return PaymentOperationService.instance;
   }
 
-  getFee(currency:string): string {
-    return supportedTokens[currency]?.fee ?? "";
+  private isMainnet = true;
+
+  private tokens:{[key:string]: Token} = {};
+
+  private prices:{[key:string]: bigint} = {};
+
+  private paymentWallet?:Principal;
+
+  /**
+   * specify network.  Call this method when network changed.
+   * @param network 
+   */
+  async setNetwork(network: "mainnet"|"local") {
+    const isMainnet = network == "mainnet";
+    if (this.isMainnet == isMainnet) {
+      // no change
+    }
+
+    // Update paymentInfo
+    this.isMainnet = isMainnet;
+    try {
+      const paymentInfo = await this.getPaymentInfo();
+
+      // update supported tokens
+      this.tokens = paymentInfo.tokens.reduce(
+        (obj:any, data:any[]) =>{
+          const [ currency, value ] = data;
+          obj[currency] = value;
+          return obj;
+        }, {});
+
+      // update prices
+      this.prices = paymentInfo.prices.reduce(
+        (obj:any, data:any[]) =>{
+          const [ currency, price ] = data;
+          const token = this.tokens[currency];
+          if (token) {
+            obj[currency] = price;
+          }
+          return obj;
+        }, {});
+
+      // payment Wallet
+      this.paymentWallet = paymentInfo.paymentWallet;
+    } catch (e: any) {
+      // TODO error handling
+      throw e;
+    }
   }
 
-  async getBalance(currency: string, network?: 'local' | 'mainnet'): Promise<GetBalanceResult> {
+  /**
+   * returns current login identity.  Override this for test
+  */
+  async getIdentity():Promise<Identity> {
+    const { AuthClient } = await import('@dfinity/auth-client');
+    const authClient = await AuthClient.create();
+    return authClient.getIdentity();
+  }
+
+  async getPaymentInfo() {
+    const actor:any = await this.getBackendActor();
+    return await actor.getPaymentInfo();
+  }
+
+  getPaymentAddress(): string {
+    return this.paymentWallet?.toString() ?? "";
+  }
+
+  getPrice(currency:string): string {
+    const token = this.tokens[currency];
+    const price = this.prices[currency];
+    return (token && price) ? this.formatPrice(price, token.decimal, token.digits) : "";
+  }
+
+  getFee(currency:string): string {
+    const token = this.tokens[currency];
+    return token ? this.formatPrice(token.fee, token.decimal, token.digits) : "";
+  }
+
+  getTotalAmount(currency:string): string {
+    const token = this.tokens[currency];
+    const price = this.prices[currency];
+    if (token && price) {
+      const total:bigint = price + token.fee;
+      return this.formatPrice(total, token.decimal, token.digits);
+    }
+    return "";
+  }
+
+  async getBalance(currency: string): Promise<GetBalanceResult> {
     try {
-      const currentNetwork = network || getGlobalSessionNetwork() || undefined;
-      const { token, ledger, identity } = await this.prepare(currency, currentNetwork);
+      const { token, ledger, identity } = await this.prepare(currency);
 
       // get balance of Owner
       const balance: BigInt = await ledger.balance({
@@ -85,7 +150,7 @@ class PaymentOperationService {
       return {
         success: true,
         currency,
-        balance: this.formatBalance(balance, token.decimal, token.digits)
+        balance: this.formatPrice(balance, token.decimal, token.digits)
       }
 
     } catch (e: any) {
@@ -99,8 +164,7 @@ class PaymentOperationService {
 
   async transfer(currency:string, to:Principal, amount:number|BigNumber): Promise<TransferResult> {
     try {
-      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
-      const { token, ledger } = await this.prepare(currency, currentNetwork);
+      const { token, ledger } = await this.prepare(currency);
       const blockIndex = await ledger.transfer({
         to: {
           owner: to,
@@ -123,8 +187,7 @@ class PaymentOperationService {
 
   async approve(currency:string, spender:Principal, amount:number|BigNumber, expiresMs?:number): Promise<ApproveResult> {
     try {
-      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
-      const { token, identity, ledger } = await this.prepare(currency, currentNetwork);
+      const { token, identity, ledger } = await this.prepare(currency);
       const blockIndex = await ledger.approve({
         amount: this.toBingInt(amount, token.decimal),
         spender: {
@@ -148,8 +211,7 @@ class PaymentOperationService {
 
   async allowance(currency:string, spender:Principal): Promise<AllowanceResult> {
     try {
-      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
-      const { token, identity, ledger } = await this.prepare(currency, currentNetwork);
+      const { token, identity, ledger } = await this.prepare(currency);
       const result = await ledger.allowance({
         account: {
           owner: identity.getPrincipal(),
@@ -162,7 +224,7 @@ class PaymentOperationService {
       });
 
       return {
-        allowance: this.formatBalance(result.allowance, token.decimal, token.digits),
+        allowance: this.formatPrice(result.allowance, token.decimal, token.digits),
         success: true,
       };
     } catch (e:any) {
@@ -175,8 +237,7 @@ class PaymentOperationService {
 
   async transferFrom(currency:string, from:Principal, to:Principal, amount:number|BigNumber): Promise<TransferResult> {
     try {
-      const currentNetwork = getGlobalSessionNetwork() || 'mainnet';
-      const { token, identity, ledger } = await this.prepare(currency, currentNetwork);
+      const { token, identity, ledger } = await this.prepare(currency);
       const blockIndex = await ledger.transferFrom({
         from: {
           owner: from,
@@ -201,38 +262,32 @@ class PaymentOperationService {
     }
   }
 
-  private async prepare(currency: string, network: 'local' | 'mainnet' = 'mainnet'): Promise<Prepared> {
-    const token = supportedTokens[currency];
+  private async prepare(currency: string): Promise<Prepared> {
+    const token = this.tokens[currency];
     if (!token) {
       throw new Error(`${currency} not supporeted`);
     }
 
-    // Logic imported from driveOperationService#callBackendCanister()
-    const { AuthClient } = await import('@dfinity/auth-client');
-    const authClient = await AuthClient.create();
-    const identity = authClient.getIdentity();
+    const identity = await this.getIdentity();
 
-    let host;
-    if (network === 'mainnet') {
-      host = process.env.EXPO_PUBLIC_ICP_MAINNET_URL;
-    } else {
-      host = process.env.EXPO_PUBLIC_ICP_LOCAL_URL;
-    }
+    let host = this.isMainnet ? process.env.EXPO_PUBLIC_ICP_MAINNET_URL : process.env.EXPO_PUBLIC_ICP_LOCAL_URL;
 
     const agent = new HttpAgent({
       identity,
       host,
-      shouldFetchRootKey: (network === 'local'),
+      shouldFetchRootKey: !this.isMainnet,
     });
 
-    if (network === 'local') {
+/* shouldFetchRootKey 
+    if (!this.isMainnet) {
       await agent.fetchRootKey();
     }
+*/
 
     // Target ledger canister
     const ledger = IcrcLedgerCanister.create({
       agent: agent,
-      canisterId: token.principal,
+      canisterId: token.canisterId,
     });
 
     return {
@@ -243,11 +298,53 @@ class PaymentOperationService {
     };
   }
 
+  // based on driveOperationService#callBackendCanister()
+  async getBackendActor():Promise<Actor> {
+    const [host, canisterId] = this.isMainnet ? 
+      [process.env.EXPO_PUBLIC_ICP_MAINNET_URL, process.env.EXPO_PUBLIC_ICP_MAINNET_CANISTER_ID_DRIVE_GACHA] :
+      [process.env.EXPO_PUBLIC_ICP_LOCAL_URL,   process.env.EXPO_PUBLIC_ICP_LOCAL_CANISTER_ID_DRIVE_GACHA];
+    if (!canisterId) {
+      throw new Error('Drive gacha canister ID not configured');
+    }
+
+    const agent = new HttpAgent({
+      // no identity needed: anonymous
+      host,
+      shouldFetchRootKey: !this.isMainnet,
+    });
+
+    const idlFactory = ({ IDL }: { IDL: any }) => {
+      const Token = IDL.Record({
+        'fee' : IDL.Nat,
+        'digits' : IDL.Nat8,
+        'decimal' : IDL.Nat8,
+        'canisterId' : IDL.Principal,
+      });
+      const PaymentInfo = IDL.Record({
+        'tokens' : IDL.Vec(IDL.Tuple(IDL.Text, Token)),
+        'prices' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
+        'paymentWallet' : IDL.Principal,
+      });
+
+      return IDL.Service({
+        'getPaymentInfo' : IDL.Func([], [PaymentInfo], ['query']),
+        'setPaymentWallet' : IDL.Func([IDL.Principal], [IDL.Bool], []),
+      });
+    };
+
+    // Create the actor
+    const actor = Actor.createActor(idlFactory, {
+      agent,
+      canisterId,
+    });
+    return actor;
+  }
+
   toBingInt(amount:number|BigNumber, decimal:number): bigint {
     return BigInt(BigNumber(amount).shiftedBy(decimal).toFixed(0));
   }
 
-  formatBalance(balance:BigInt, decimal:number, digits:number): string {
+  formatPrice(balance:BigInt, decimal:number, digits:number): string {
     return BigNumber(balance.toString()).shiftedBy(-decimal).toFixed(digits);
   }
 }
