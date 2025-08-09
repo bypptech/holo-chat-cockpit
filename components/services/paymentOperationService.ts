@@ -74,7 +74,7 @@ class PaymentOperationService {
 
   async getBalance(currency: string, network?: 'local' | 'mainnet'): Promise<GetBalanceResult> {
     try {
-      const currentNetwork = network || getGlobalSessionNetwork();
+      const currentNetwork = network || getGlobalSessionNetwork() || undefined;
       const { token, ledger, identity } = await this.prepare(currency, currentNetwork);
 
       // get balance of Owner

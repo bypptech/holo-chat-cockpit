@@ -54,7 +54,7 @@ class DriveOperationService {
 
     try {
       // Get current login session network from ICPAuth
-      const currentNetwork = getGlobalSessionNetwork();
+      const currentNetwork = getGlobalSessionNetwork() || undefined;
       
       // Call the backend canister with the appropriate network
       const canisterResponse = await this.callBackendCanister(token, currentNetwork);

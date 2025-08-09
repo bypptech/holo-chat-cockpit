@@ -132,7 +132,7 @@ export default function ControllerScreen() {
     try {
       console.log('Internet Identity login started for network:', network);
 
-      // Use real ICP authentication
+      // Use real ICP authentication, mapping mainnet to 'ic' for compatibility
       const icpNetwork = network === 'mainnet' ? 'ic' : network;
       await icpLogin(icpNetwork);
 
@@ -189,14 +189,14 @@ export default function ControllerScreen() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             {userPrincipal && (
-              <View style={styles.principalContainer}>
+              <View style={styles.indexPrincipalContainer}>
                 <User size={16} color={colors.text} />
                 {registeredUsername ? (
-                  <Text style={[styles.usernameText, { color: colors.text }]}>
+                  <Text style={[styles.indexUsernameText, { color: colors.text }]}>
                     {registeredUsername}
                   </Text>
                 ) : (
-                  <Text style={[styles.principalText, { color: colors.text }]}>
+                  <Text style={[styles.indexPrincipalText, { color: colors.text }]}>
                     {userPrincipal.slice(0, 20)}...
                   </Text>
                 )}
@@ -211,11 +211,11 @@ export default function ControllerScreen() {
           <View style={styles.headerRight}>
             {userPrincipal && (
               <TouchableOpacity
-                style={[styles.logoutButton, { backgroundColor: colors.error + '20', borderColor: colors.error }]}
+                style={[styles.indexLogoutButton, { backgroundColor: colors.error + '20', borderColor: colors.error }]}
                 onPress={handleLogout}
               >
                 <LogOut size={16} color={colors.error} />
-                <Text style={[styles.logoutButtonText, { color: colors.error }]}>{t('controls:authentication.logout')}</Text>
+                <Text style={[styles.indexLogoutButtonText, { color: colors.error }]}>{t('controls:authentication.logout')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -223,25 +223,25 @@ export default function ControllerScreen() {
 
         {/* Blockchain Connection Section */}
         {userPrincipal && (
-          <View style={styles.blockchainSection}>
+          <View style={styles.indexBlockchainSection}>
             <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.blockchainCard}>
               {/* Wallet Cards Section */}
-              <View style={styles.walletCardsContainer}>
+              <View style={styles.indexWalletCardsContainer}>
                 {/* Child Card 1: Wallet Status */}
-                <View style={[styles.walletCard, { backgroundColor: colors.card, zIndex: 10002 }]}>
-                  <Text style={[styles.walletCardTitle, { color: colors.text }]}>{t('index:walletStatus')}</Text>
+                <View style={[styles.indexWalletCard, { backgroundColor: colors.card, zIndex: 10002 }]}>
+                  <Text style={[styles.indexWalletCardTitle, { color: colors.text }]}>{t('index:walletStatus')}</Text>
                   
                   {/* Wallet Address with Copy */}
-                  <View style={styles.addressSection}>
-                    <Text style={[styles.addressLabel, { color: colors.textSecondary }]}>{t('index:walletAddress')}</Text>
+                  <View style={styles.indexAddressSection}>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary }]}>{t('index:walletAddress')}</Text>
                     <TouchableOpacity 
-                      style={styles.addressContainer}
+                      style={styles.indexAddressContainer}
                       onPress={async () => {
                         await Clipboard.setStringAsync(userPrincipal);
                         Alert.alert(t('index:alerts.copied'), t('index:alerts.addressCopied'));
                       }}
                     >
-                      <Text style={[styles.addressText, { color: colors.text }]}>
+                      <Text style={[styles.indexAddressText, { color: colors.text }]}>
                         {userPrincipal.slice(0, 12)}...{userPrincipal.slice(-12)}
                       </Text>
                       <Copy size={16} color={colors.textSecondary} />
@@ -249,10 +249,10 @@ export default function ControllerScreen() {
                   </View>
 
                   {/* Balance with Currency Toggle */}
-                  <View style={[styles.balanceSection, { zIndex: 10000 }]}>
-                    <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>{t('index:balance')}</Text>
-                    <View style={[styles.balanceRow, { zIndex: 10001 }]}>
-                      <Text style={[styles.balanceAmount, { color: colors.text }]}>{balance}</Text>
+                  <View style={[styles.indexBalanceSection, { zIndex: 10000 }]}>
+                    <Text style={[styles.indexBalanceLabel, { color: colors.textSecondary }]}>{t('index:balance')}</Text>
+                    <View style={[styles.indexBalanceRow, { zIndex: 10001 }]}>
+                      <Text style={[styles.indexBalanceAmount, { color: colors.text }]}>{balance}</Text>
                       <View style={[styles.currencyDropdown, { backgroundColor: colors.primary + '20', borderColor: colors.border, zIndex: 999999 }]}>
                         <TouchableOpacity
                           style={styles.dropdownHeader}
@@ -286,14 +286,14 @@ export default function ControllerScreen() {
                       </View>
                     </View>
                     {balanceCurrency === 'ICP' && (
-                      <Text style={[styles.balanceUsd, { color: colors.textSecondary }]}>≈ $0.00 USD</Text>
+                      <Text style={[styles.indexBalanceUsd, { color: colors.textSecondary }]}>≈ $0.00 USD</Text>
                     )}
                   </View>
                 </View>
 
                 {/* Child Card 2: New Transfer */}
-                <View style={[styles.walletCard, { backgroundColor: colors.card }]}>
-                  <Text style={[styles.walletCardTitle, { color: colors.text }]}>{t('index:newTransfer')}</Text>
+                <View style={[styles.indexWalletCard, { backgroundColor: colors.card }]}>
+                  <Text style={[styles.indexWalletCardTitle, { color: colors.text }]}>{t('index:newTransfer')}</Text>
                   
                   {/* Recipient Address Input */}
                   <View style={styles.inputSection}>
