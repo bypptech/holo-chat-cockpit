@@ -7,11 +7,13 @@ import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface ICPAuthProps {
-  onAuthChange?: (authenticated: boolean, data?: { principal: string }) => void;
+  onAuthChange?: (authenticated: boolean, data?: { principal: string; network?: 'local' | 'mainnet' }) => void;
+  onNetworkChange?: (network: 'local' | 'mainnet') => void;
 }
 
-export function ICPAuth({ onAuthChange }: ICPAuthProps) {
-  const [selectedNetwork, setSelectedNetwork] = useState<'local' | 'ic'>('ic');
+export function ICPAuth({ onAuthChange, onNetworkChange }: ICPAuthProps) {
+  const [selectedNetwork, setSelectedNetwork] = useState<'local' | 'mainnet'>('mainnet');
+  const [currentSessionNetwork, setCurrentSessionNetwork] = useState<'local' | 'mainnet' | null>(null);
   const { 
     isAuthenticated, 
     principal, 
@@ -24,8 +26,16 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
 
   const handleLogin = async () => {
     try {
-      await login(selectedNetwork);
-      onAuthChange?.(true, principal ? { principal } : undefined);
+      // Map mainnet to 'ic' for the actual login call
+      const networkForLogin = selectedNetwork === 'mainnet' ? 'ic' : selectedNetwork;
+      await login(networkForLogin);
+      
+      // Store the current session network both locally and globally
+      setCurrentSessionNetwork(selectedNetwork);
+      setGlobalSessionNetwork(selectedNetwork);
+      
+      onAuthChange?.(true, { principal: principal!, network: selectedNetwork });
+      onNetworkChange?.(selectedNetwork);
       Alert.alert('Success', 'Successfully authenticated with Internet Identity!');
     } catch (error) {
       console.error('Authentication failed:', error);
@@ -36,7 +46,13 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
   const handleLogout = async () => {
     try {
       await logout();
+      
+      // Clear session network both locally and globally
+      setCurrentSessionNetwork(null);
+      setGlobalSessionNetwork(null);
+      
       onAuthChange?.(false);
+      onNetworkChange?.(selectedNetwork); // Keep the selected network for next login
       Alert.alert('Success', 'Successfully logged out.');
     } catch (error) {
       console.error('Logout failed:', error);
@@ -45,7 +61,7 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
   };
 
   const networks = [
-    { value: 'ic' as const, label: 'Mainnet', color: '#00FF88' },
+    { value: 'mainnet' as const, label: 'Mainnet', color: '#00FF88' },
     { value: 'local' as const, label: 'Local', color: '#FFD700' }
   ];
 
@@ -125,6 +141,14 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
                 <Text style={styles.principalText}>
                   {formatPrincipal(principal)}
                 </Text>
+                {currentSessionNetwork && (
+                  <View style={styles.networkInfo}>
+                    <Text style={styles.principalLabel}>Network:</Text>
+                    <Text style={[styles.networkText, { color: currentSessionNetwork === 'mainnet' ? '#00FF88' : '#FFD700' }]}>
+                      {currentSessionNetwork === 'mainnet' ? 'Mainnet' : 'Local'}
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -148,6 +172,42 @@ export function ICPAuth({ onAuthChange }: ICPAuthProps) {
       )}
     </BlurView>
   );
+}
+
+// Global state for session network (simple implementation)
+let globalSessionNetwork: 'local' | 'mainnet' | null = null;
+const sessionNetworkListeners: Array<(network: 'local' | 'mainnet' | null) => void> = [];
+
+// Utility functions for managing global session network state
+export const setGlobalSessionNetwork = (network: 'local' | 'mainnet' | null) => {
+  globalSessionNetwork = network;
+  sessionNetworkListeners.forEach(listener => listener(network));
+};
+
+export const getGlobalSessionNetwork = (): 'local' | 'mainnet' | null => {
+  return globalSessionNetwork;
+};
+
+// Hook to get current ICP session network from external components
+export function useICPSessionNetwork() {
+  const [sessionNetwork, setSessionNetwork] = useState<'local' | 'mainnet' | null>(globalSessionNetwork);
+  
+  React.useEffect(() => {
+    const listener = (network: 'local' | 'mainnet' | null) => {
+      setSessionNetwork(network);
+    };
+    
+    sessionNetworkListeners.push(listener);
+    
+    return () => {
+      const index = sessionNetworkListeners.indexOf(listener);
+      if (index > -1) {
+        sessionNetworkListeners.splice(index, 1);
+      }
+    };
+  }, []);
+  
+  return sessionNetwork;
 }
 
 const styles = StyleSheet.create({
@@ -252,6 +312,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   sessionInfo: {
+    gap: 4,
+  },
+  networkInfo: {
+    marginTop: 8,
     gap: 4,
   },
   principalLabel: {

@@ -24,7 +24,7 @@ import { createTabStyles } from './styles';
 interface ICPSession {
   principal: string;
   expiresAt: Date;
-  network: 'local' | 'testnet' | 'ic';
+  network: 'local' | 'mainnet';
 }
 
 
@@ -47,7 +47,7 @@ export default function ControllerScreen() {
   const [registeredUsername, setRegisteredUsername] = useState<string | null>(null);
   const [isControlActive, setIsControlActive] = useState(false);
   const [currentSession, setCurrentSession] = useState<ICPSession | null>(null);
-  const [selectedNetwork, setSelectedNetwork] = useState<'local' | 'testnet' | 'ic'>('local');
+  const [selectedNetwork, setSelectedNetwork] = useState<'local' | 'mainnet'>('local');
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [balanceCurrency, setBalanceCurrency] = useState<'ICP' | 'ckUSDC'>('ICP');
   const [balance, setBalance] = useState('');
@@ -127,13 +127,13 @@ export default function ControllerScreen() {
   const isLargeScreen = screenDimensions.width >= 1024;
   const isSmallScreen = screenDimensions.width < 480;
 
-  const handleLogin = async (network: 'local' | 'ic' | 'testnet' = 'local') => {
+  const handleLogin = async (network: 'local' | 'mainnet' = 'local') => {
     setLoginLoading(true);
     try {
       console.log('Internet Identity login started for network:', network);
 
-      // Use real ICP authentication, treating 'testnet' as 'ic' for simplicity
-      const icpNetwork = network === 'testnet' ? 'ic' : network;
+      // Use real ICP authentication
+      const icpNetwork = network === 'mainnet' ? 'ic' : network;
       await icpLogin(icpNetwork);
 
       if (icpPrincipal) {
@@ -426,7 +426,7 @@ export default function ControllerScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.networkButton, { backgroundColor: colors.primary }]}
-                    onPress={() => handleLogin('ic')}
+                    onPress={() => handleLogin('mainnet')}
                     disabled={loginLoading || icpLoading}
                   >
                     <Cloud size={20} color="white" />
