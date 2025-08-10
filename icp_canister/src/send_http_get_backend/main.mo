@@ -5,8 +5,10 @@ import Array "mo:core/Array";
 import Int "mo:core/Int";
 import Iter "mo:core/Iter";
 import Map "mo:core/Map";
+import Nat64 "mo:core/Nat64";
 import Principal "mo:core/Principal";
 import IC "ic:aaaaa-aa";
+import IcpLedger "canister:icp_ledger_canister";
 import Ledger "ledger";
 
 shared ({caller = owner}) persistent actor class Backend() {
@@ -29,7 +31,7 @@ shared ({caller = owner}) persistent actor class Backend() {
     };
   };
 
-  public func gacha_drive_request(auth_token : Text) : async Text {
+  public shared ({caller}) func gacha_drive_request(auth_token : Text) : async Text {
     let url = "https://gacha-icp.kwhppscv.dev/drive";
     let request_headers = [
       { name = "User-Agent"; value = "gacha-controller" },
@@ -190,8 +192,59 @@ shared ({caller = owner}) persistent actor class Backend() {
         return #Ok(blockIndex);
       };
       case (#Err(error)) {
+        // TODO accept oldPrice for a while
         return #Err(debug_show(error)); // TODO Error message
       };
     };
   };
+
+  public shared func checkTransaction(currency:Text, from:Principal, to:Principal, amount:Nat64, blockIndex:Nat64) : async Bool {
+    if (currency == "ICP") {
+      let result = await IcpLedger.query_blocks({
+        start = blockIndex;
+        length = 1
+      });
+      if (result.first_block_index <= blockIndex and result.blocks.size() == 1) {
+        let ?operation = result.blocks[0].transaction.operation else return false;
+        switch operation {
+          case (#Transfer transfer) { 
+            if (transfer.from == Principal.toLedgerAccount(from, null) and
+                transfer.to   == Principal.toLedgerAccount(to,   null) and
+                transfer.amount.e8s == amount) {
+              return true;
+            } else {
+              return false;
+            }
+          };
+          case _ {
+            return false;
+          };
+        };
+      } else {
+        // TODO Maybe in archive ledger.
+        return false;
+      };
+    } else {
+      let ?token = Map.get(tokenMap, Text.compare, currency) else return false;
+      let ledger = actor(Principal.toText(token.canisterId)) : Ledger.Service;
+      let blockIndexNat = Nat64.toNat(blockIndex);
+      let result = await ledger.get_transactions({
+        start = blockIndexNat; //Nat64.toNat(blockIndex);
+        length = 1;
+      });
+      if (result.first_index <= blockIndexNat and result.transactions.size() == 1) {
+        let ?transfer = result.transactions[0].transfer else return false;
+        if (transfer.from == { owner = from; subaccount = null; } and
+            transfer.to   == { owner = to; subaccount = null; } and
+            transfer.amount == Nat64.toNat(amount)) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        // TODO Maybe in archive ledger.
+        return false;
+      };
+    };
+ };
 };
