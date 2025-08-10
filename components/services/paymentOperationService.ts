@@ -65,6 +65,7 @@ class PaymentOperationService {
     const isMainnet = network == "mainnet";
     if (this.isMainnet === isMainnet) {
       // no change
+      return;
     }
 
     // Update paymentInfo
