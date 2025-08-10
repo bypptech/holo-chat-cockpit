@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +21,7 @@ import { MultiAuth } from '@/components/auth/MultiAuth';
 import { useInternetIdentity } from '@/contexts/InternetIdentityContext';
 import PaymentOperationService from '@/components/services/paymentOperationService';
 import { createTabStyles } from './styles';
+import { Principal } from '@dfinity/principal';
 
 interface ICPSession {
   principal: string;
@@ -56,7 +58,75 @@ export default function ControllerScreen() {
   const [transferAmount, setTransferAmount] = useState('');
   const [gasFee, setGasFee] = useState('');
   const [totalAmount, setTotalAmount] = useState("");
+  const [isTransferButtonEnabled, setIsTransferButtonEnabled] = useState(false);
+  const [isTransferring, setIsTransferring] = useState(false);
+ 
   const paymentService = PaymentOperationService.getInstance();
+
+  // Get recipient balance helper function
+  const getRecipientBalance = async (currency: string) => {
+    if (!recipientAddress) return 'N/A';
+    try {
+      // Create a temporary service instance to check recipient balance
+      const tempService = PaymentOperationService.getInstance();
+      await tempService.setNetwork(selectedNetwork);
+      
+      // Note: This requires a method to check balance of a specific address
+      // For now, we'll return 'Not available' as the current service doesn't support this
+      return 'Not available';
+    } catch (error) {
+      return 'Error';
+    }
+  };
+
+  // Calculate total amount when transfer amount or gas fee changes
+  const calculateTotalAmount = (amount: string, fee: string) => {
+    if (!amount || !fee) return '';
+    const amountNum = parseFloat(amount);
+    const feeNum = parseFloat(fee);
+    if (isNaN(amountNum) || isNaN(feeNum)) return '';
+    return (amountNum + feeNum).toString();
+  };
+
+  // Format total amount to 4 decimal places
+  const formatTotalAmount = (amount: string) => {
+    if (!amount) return '';
+    const num = parseFloat(amount);
+    if (isNaN(num)) return amount;
+    return num.toFixed(4);
+  };
+
+  // Check if transfer button should be enabled and update state
+  const updateTransferButtonState = () => {
+    if (isTransferring || !transferAmount || !gasFee || !totalAmount || !balance || !recipientAddress) {
+      setIsTransferButtonEnabled(false);
+      return;
+    }
+
+    const transferAmountNum = parseFloat(transferAmount);
+    const gasFeeNum = parseFloat(gasFee);
+    const totalAmountNum = parseFloat(totalAmount);
+    const balanceNum = parseFloat(balance);
+    const price = parseFloat(paymentService.getPrice(balanceCurrency));
+
+    // Check if any values are invalid
+    if (isNaN(transferAmountNum) || isNaN(gasFeeNum) || isNaN(totalAmountNum) || isNaN(balanceNum) || isNaN(price)) {
+      setIsTransferButtonEnabled(false);
+      return;
+    }
+
+    // Validate recipient address format
+    try {
+      Principal.fromText(recipientAddress);
+    } catch (error) {
+      setIsTransferButtonEnabled(false);
+      return;
+    }
+
+    // Check if total amount is valid
+    const isValid =  price <= (transferAmountNum + gasFeeNum)  && totalAmountNum <= balanceNum;
+    setIsTransferButtonEnabled(isValid);
+  };
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -65,6 +135,11 @@ export default function ControllerScreen() {
 
     return () => subscription?.remove();
   }, []);
+
+  // Update transfer button state when relevant values change
+  useEffect(() => {
+    updateTransferButtonState();
+  }, [transferAmount, gasFee, totalAmount, balance, recipientAddress, isTransferring]);
 
   useEffect(() => {
     if (userPrincipal) {
@@ -121,6 +196,8 @@ export default function ControllerScreen() {
         if (result.success && balanceCurrency == currency) {
           setBalance(result.balance!);
         }
+        // Update debug info
+        await updateDebugInfo();
       }).catch(() => {
         // TODO error handling
       });
@@ -188,6 +265,57 @@ export default function ControllerScreen() {
   const allStyles = createTabStyles(colors, isDark, screenDimensions, isTablet, isLargeScreen, isSmallScreen);
   const styles = { ...allStyles.common, ...allStyles.index };
 
+
+
+   // Debug info states
+  const [debugInfo, setDebugInfo] = useState({
+    paymentAddress: '',
+    priceICP: '',
+    priceUSDC: '',
+    feeICP: '',
+    feeUSDC: '',
+    totalAmountICP: '',
+    totalAmountUSDC: '',
+    balanceICP: '',
+    balanceUSDC: '',
+    recipientBalanceICP: '',
+    recipientBalanceUSDC: '',
+    lastUpdated: null as Date | null,
+  });
+
+  // Debug info update function
+  const updateDebugInfo = async () => {
+    if (!icpAuthenticated || !userPrincipal) return;
+    
+    try {
+      await paymentService.setNetwork(selectedNetwork);
+      
+      const [balanceICP, balanceUSDC, recipientBalanceICP, recipientBalanceUSDC] = await Promise.all([
+        paymentService.getBalance('ICP'),
+        paymentService.getBalance('ckUSDC'),
+        getRecipientBalance('ICP'),
+        getRecipientBalance('ckUSDC'),
+      ]);
+      
+      setDebugInfo({
+        paymentAddress: paymentService.getPaymentAddress(),
+        priceICP: paymentService.getPrice('ICP'),
+        priceUSDC: paymentService.getPrice('ckUSDC'),
+        feeICP: paymentService.getFee('ICP'),
+        feeUSDC: paymentService.getFee('ckUSDC'),
+        totalAmountICP: paymentService.getTotalAmount('ICP'),
+        totalAmountUSDC: paymentService.getTotalAmount('ckUSDC'),
+        balanceICP: balanceICP.success ? balanceICP.balance! : 'Error',
+        balanceUSDC: balanceUSDC.success ? balanceUSDC.balance! : 'Error',
+        recipientBalanceICP: recipientBalanceICP,
+        recipientBalanceUSDC: recipientBalanceUSDC,
+        lastUpdated: new Date(),
+      });
+    } catch (error) {
+      console.error('Debug info update failed:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={isDark ? ['#000428', '#004e92'] : ['#667eea', '#764ba2']} style={styles.gradient}>
@@ -226,8 +354,13 @@ export default function ControllerScreen() {
           </View>
         </View>
 
-        {/* Blockchain Connection Section */}
-        {userPrincipal && (
+        <ScrollView 
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        >
+          {/* Blockchain Connection Section */}
+          {userPrincipal && (
           <View style={styles.indexBlockchainSection}>
             <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.blockchainCard}>
               {/* Wallet Cards Section */}
@@ -330,7 +463,10 @@ export default function ControllerScreen() {
                         placeholderTextColor={colors.textSecondary}
                         value={transferAmount}
                         keyboardType="numeric"
-                        onChangeText={setTransferAmount}
+                        onChangeText={(text) => {
+                          setTransferAmount(text);
+                          setTotalAmount(calculateTotalAmount(text, gasFee));
+                        }}
                       />
                       <View style={[styles.currencyDisplay, { backgroundColor: colors.primary + '20' }]}>
                         <Text style={[styles.currencyText, { color: colors.primary }]}>{balanceCurrency}</Text>
@@ -362,7 +498,7 @@ export default function ControllerScreen() {
                   <View style={[styles.totalSection, { borderTopColor: colors.border }]}>
                     <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>{t('index:totalAmount')}</Text>
                     <View style={styles.totalRow}>
-                      <Text style={[styles.totalAmount, { color: colors.text }]}>{totalAmount}</Text>
+                      <Text style={[styles.totalAmount, { color: colors.text }]}>{formatTotalAmount(totalAmount)}</Text>
                       <Text style={[styles.totalCurrency, { color: colors.text }]}>{balanceCurrency}</Text>
                     </View>
                   </View>
@@ -380,12 +516,55 @@ export default function ControllerScreen() {
                       <Text style={[styles.resetButtonText, { color: colors.text }]}>{t('index:cancel')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
-                      style={[styles.transferButton, { backgroundColor: colors.primary }]}
-                      onPress={() => {
-                        Alert.alert(t('index:transfer'), t('index:transferInitiated'));
+                      style={[
+                        styles.transferButton, 
+                        { 
+                          backgroundColor: isTransferButtonEnabled ? colors.primary : colors.textSecondary,
+                          opacity: isTransferButtonEnabled ? 1 : 0.6 
+                        }
+                      ]}
+                      disabled={!isTransferButtonEnabled}
+                      onPress={async () => {
+                        if (!isTransferButtonEnabled) return;
+                        
+                        // 送信ボタンを無効化
+                        setIsTransferring(true);
+                        
+                        try {
+                          const recipientPrincipal = Principal.fromText(recipientAddress);
+                          const transferResult = await paymentService.transfer(balanceCurrency, recipientPrincipal, parseFloat(transferAmount));
+                          
+                          if (transferResult.success) {
+                            // Update balance after successful transfer
+                            const balanceResult = await paymentService.getBalance(balanceCurrency);
+                            if (balanceResult.success) {
+                              setBalance(balanceResult.balance!);
+                            }
+                            
+                            // Update debug info
+                            await updateDebugInfo();
+                                                                                    
+                            Alert.alert(
+                              t('common:success'),
+                              `Transfer completed! Block index: ${transferResult.blockIndex?.toString()}`
+                            );
+                          } else {
+                            Alert.alert(t('common:error'), transferResult.error || 'Transfer failed');
+                          }
+                        } catch (error) {
+                          console.error('Transfer error:', error);
+                          Alert.alert(t('common:error'), error instanceof Error ? error.message : 'Transfer failed');
+                        } finally {
+                          // 送信ボタンを有効化
+                          setIsTransferring(false);
+                        }
                       }}
                     >
-                      <Text style={styles.transferButtonText}>{t('index:send')}</Text>
+                      {isTransferring ? (
+                        <ActivityIndicator size="small" color="white" />
+                      ) : (
+                        <Text style={styles.transferButtonText}>{t('index:send')}</Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -393,7 +572,70 @@ export default function ControllerScreen() {
             </BlurView>
           </View>
         )}
-       
+
+        {/* Debug Section */}
+        {userPrincipal && (
+          <View style={[styles.indexBlockchainSection, { marginTop: 20 }]}>
+            <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={styles.blockchainCard}>
+              <View style={styles.indexWalletCard}>
+                <Text style={[styles.indexWalletCardTitle, { color: colors.text }]}>デバッグ情報</Text>
+                
+                {debugInfo.lastUpdated && (
+                  <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, textAlign: 'center', marginBottom: 16 }]}>
+                    最終更新: {debugInfo.lastUpdated.toLocaleTimeString()}
+                  </Text>
+                )}
+
+                <View style={{ gap: 16, marginBottom: 20 }}>
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={[styles.indexAddressLabel, { color: colors.text, fontSize: 14, fontWeight: 'bold' }]}>Payment Address (getPaymentAddress)</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>{debugInfo.paymentAddress || 'N/A'}</Text>
+                  </View>
+
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={[styles.indexAddressLabel, { color: colors.text, fontSize: 14, fontWeight: 'bold' }]}>Prices (getPrice)</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ICP: {debugInfo.priceICP || 'N/A'}</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ckUSDC: {debugInfo.priceUSDC || 'N/A'}</Text>
+                  </View>
+
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={[styles.indexAddressLabel, { color: colors.text, fontSize: 14, fontWeight: 'bold' }]}>Fees (getFee)</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ICP: {debugInfo.feeICP || 'N/A'}</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ckUSDC: {debugInfo.feeUSDC || 'N/A'}</Text>
+                  </View>
+
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={[styles.indexAddressLabel, { color: colors.text, fontSize: 14, fontWeight: 'bold' }]}>Total Amounts (getTotalAmount)</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ICP: {debugInfo.totalAmountICP || 'N/A'}</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ckUSDC: {debugInfo.totalAmountUSDC || 'N/A'}</Text>
+                  </View>
+
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={[styles.indexAddressLabel, { color: colors.text, fontSize: 14, fontWeight: 'bold' }]}>Balances (getBalance)</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ICP: {debugInfo.balanceICP || 'N/A'}</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ckUSDC: {debugInfo.balanceUSDC || 'N/A'}</Text>
+                  </View>
+
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={[styles.indexAddressLabel, { color: colors.text, fontSize: 14, fontWeight: 'bold' }]}>Recipient Balances</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>Address: {recipientAddress || 'No address'}</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ICP: {debugInfo.recipientBalanceICP || 'N/A'}</Text>
+                    <Text style={[styles.indexAddressLabel, { color: colors.textSecondary, fontSize: 12, marginLeft: 8 }]}>ckUSDC: {debugInfo.recipientBalanceUSDC || 'N/A'}</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity 
+                  style={[styles.transferButton, { backgroundColor: colors.primary, width: '100%', alignSelf: 'center' }]}
+                  onPress={updateDebugInfo}
+                >
+                  <Text style={styles.transferButtonText}>最新情報更新</Text>
+                </TouchableOpacity>
+              </View>
+            </BlurView>
+          </View>
+        )}
+        </ScrollView>
+
         {/* Login Modal */}
         <Modal
           animationType="slide"

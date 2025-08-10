@@ -1154,6 +1154,42 @@ export const createIndexStyles = (colors: any, isDark: boolean, screenDimensions
   inputSection: {
     marginBottom: 20,
   },
+  
+  // Debug styles
+  indexDebugHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  indexDebugRefreshButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  indexDebugTimestamp: {
+    fontSize: 12,
+    fontFamily: 'NotoSansJP-Regular',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  indexDebugGrid: {
+    gap: 16,
+  },
+  indexDebugSection: {
+    marginBottom: 12,
+  },
+  indexDebugSectionTitle: {
+    fontSize: 14,
+    fontFamily: 'NotoSansJP-SemiBold',
+    marginBottom: 4,
+  },
+  indexDebugValue: {
+    fontSize: 12,
+    fontFamily: 'NotoSansJP-Regular',
+    marginLeft: 8,
+  },
 });
 
 // Network-specific styles
