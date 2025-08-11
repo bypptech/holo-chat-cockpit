@@ -21,6 +21,8 @@ export function MultiAuth({ onAuthChange }: MultiAuthProps) {
   const { t } = useTranslation();
   const { isDark } = useTheme();
 
+  console.log('MultiAuth render - selectedAuth:', selectedAuth, 'icpAuthenticated:', icpAuthenticated);
+
   // Check if any authentication method is active
   const isAnyAuthenticated = icpAuthenticated;
 
@@ -43,75 +45,83 @@ export function MultiAuth({ onAuthChange }: MultiAuthProps) {
   }
 
   return (
-    <BlurView intensity={80} tint="dark" style={styles.container}>
-      <View style={styles.header}>
-        <Shield size={24} color="#007AFF" />
-        <Text style={styles.title}>{t('auth:selectMethod')}</Text>
-      </View>
-
-      {/* Show current authentication status */}
-      {isAnyAuthenticated && (
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusTitle}>{t('auth:authenticated')}</Text>
-          {icpAuthenticated && (
-            <View style={styles.statusItem}>
-              <Infinity size={16} color={isDark ? "#fff" : "#00FF88"} />
-              <Text style={styles.statusText}>
-                {t('auth:internetIdentity')}: {principal?.slice(0, 8)}...{principal?.slice(-6)}
-              </Text>
-            </View>
-          )}
+    <TouchableOpacity
+      style={styles.mainContainer}
+      onPress={() => {
+        console.log('MultiAuth container pressed');
+        setSelectedAuth('icp');
+      }}
+      activeOpacity={0.9}
+    >
+      <BlurView intensity={80} tint="dark" style={styles.container}>
+        <View style={styles.header}>
+          <Shield size={24} color="#007AFF" />
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit={true}>{t('auth:selectMethod')}</Text>
         </View>
-      )}
 
-      {/* Show errors if any */}
-      {icpError && (
-        <View style={styles.errorContainer}>
-          <AlertCircle size={16} color="#FF6B35" />
-          <Text style={styles.errorText}>{icpError}</Text>
-        </View>
-      )}
+        {/* Show current authentication status */}
+        {isAnyAuthenticated && (
+          <View style={styles.statusContainer}>
+            <Text style={styles.statusTitle}>{t('auth:authenticated')}</Text>
+            {icpAuthenticated && (
+              <View style={styles.statusItem}>
+                <Infinity size={16} color={isDark ? "#fff" : "#00FF88"} />
+                <Text style={styles.statusText}>
+                  {t('auth:internetIdentity')}: {principal?.slice(0, 8)}...{principal?.slice(-6)}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
-      <Text style={styles.description}>
-        {isAnyAuthenticated 
-          ? t('auth:manageAuth')
-          : t('auth:pleaseLogin')
-        }
-      </Text>
+        {/* Show errors if any */}
+        {icpError && (
+          <View style={styles.errorContainer}>
+            <AlertCircle size={16} color="#FF6B35" />
+            <Text style={styles.errorText}>{icpError}</Text>
+          </View>
+        )}
 
-      <View style={styles.authOptions}>
-        <TouchableOpacity
-          style={[
+        <Text style={styles.description}>
+          {isAnyAuthenticated 
+            ? t('auth:manageAuth')
+            : t('auth:pleaseLogin')
+          }
+        </Text>
+
+        <View style={styles.authOptions}>
+          <View style={[
             styles.authOption, 
             styles.icpOption,
             icpAuthenticated && styles.authenticatedOption
-          ]}
-          onPress={() => setSelectedAuth('icp')}
-        >
-          <Infinity size={32} color={isDark ? "#fff" : (icpAuthenticated ? "#00FF88" : "#007AFF")} />
-          <Text style={styles.optionTitle}>{t('auth:internetIdentity')}</Text>
-          <Text style={styles.optionDescription}>
-            {icpAuthenticated ? t('auth:authenticatedManage') : t('auth:loginWithII')}
-          </Text>
-          {icpAuthenticated && (
-            <View style={styles.authenticatedBadge}>
-              <Text style={styles.authenticatedBadgeText}>✓</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-    </BlurView>
+          ]}>
+            <Infinity size={32} color={isDark ? "#fff" : (icpAuthenticated ? "#00FF88" : "#007AFF")} />
+            <Text style={styles.optionTitle}>{t('auth:internetIdentity')}</Text>
+            <Text style={styles.optionDescription} numberOfLines={2} adjustsFontSizeToFit={true}>
+              {icpAuthenticated ? t('auth:authenticatedManage') : t('auth:loginWithII')}
+            </Text>
+            {icpAuthenticated && (
+              <View style={styles.authenticatedBadge}>
+                <Text style={styles.authenticatedBadgeText}>✓</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </BlurView>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     borderRadius: 16,
-    padding: 20,
     overflow: 'hidden',
   },
+  container: {
+    padding: 20,
+  },
   authContainer: {
-    flex: 1,
+    // Remove flex: 1 to prevent excessive top spacing
   },
   backButton: {
     paddingVertical: 8,
@@ -127,12 +137,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    minWidth: 0,
   },
   title: {
     fontSize: 18,
     fontFamily: 'NotoSansJP-SemiBold',
     color: '#fff',
     marginLeft: 12,
+    flex: 1,
   },
   statusContainer: {
     marginBottom: 16,
@@ -195,6 +207,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     position: 'relative',
+    zIndex: 1000,
+    elevation: 5,
+    minHeight: 120,
   },
   icpOption: {
     borderColor: 'rgba(0, 122, 255, 0.3)',
@@ -217,6 +232,7 @@ const styles = StyleSheet.create({
     color: '#B0B0B0',
     textAlign: 'center',
     lineHeight: 16,
+    flexShrink: 1,
   },
   authenticatedBadge: {
     position: 'absolute',

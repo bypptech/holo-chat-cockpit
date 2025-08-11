@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Switch, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -83,6 +83,7 @@ interface SignalTestResult {
 export default function DevicesScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useLanguage();
+  const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
   const { 
     chatEnabledDevices, 
     updateDeviceChatStatus, 
@@ -203,6 +204,16 @@ export default function DevicesScreen() {
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
   const [selectedDeviceForSettings, setSelectedDeviceForSettings] = useState<DeviceInfo | null>(null);
   const [expandedDevices, setExpandedDevices] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenDimensions(window);
+    });
+    return () => subscription?.remove();
+  }, []);
+
+  const isTablet = screenDimensions.width >= 768;
+  const isSmallScreen = screenDimensions.width < 480;
 
   const scanForDevices = async () => {
     setIsScanning(true);
@@ -1236,9 +1247,9 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    borderRadius: 20,
+    borderRadius: 16,
+    padding: 20,
     marginHorizontal: 20,
-    maxWidth: 400,
     width: '100%',
     maxHeight: '80%',
     overflow: 'hidden',
@@ -1247,7 +1258,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -1256,7 +1267,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'NotoSansJP-Bold',
   },
   modalContent: {
-    padding: 20,
+    paddingTop: 20,
   },
   
   // Signal Test Styles

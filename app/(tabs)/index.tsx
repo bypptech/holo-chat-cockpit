@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -62,6 +62,26 @@ export default function ControllerScreen() {
   const [isTransferring, setIsTransferring] = useState(false);
  
   const paymentService = PaymentOperationService.getInstance();
+
+  // Responsive breakpoints
+  const isTablet = screenDimensions.width >= 768;
+  const isLargeScreen = screenDimensions.width >= 1024;
+  const isSmallScreen = screenDimensions.width < 480;
+
+  // Format user principal for display
+  const formattedUserPrincipal = useMemo(() => {
+    if (!userPrincipal) return '';
+    // Calculate max characters based on screen width
+    const maxChars = isTablet ? 60 : isSmallScreen ? 30 : 40;
+    
+    if (userPrincipal.length <= maxChars) {
+      return userPrincipal;
+    }
+    
+    // Show first and last parts with ellipsis in middle
+    const visibleChars = Math.floor((maxChars - 3) / 2);
+    return `${userPrincipal.slice(0, visibleChars)}...${userPrincipal.slice(-visibleChars)}`;
+  }, [userPrincipal, isTablet, isSmallScreen]);
 
   // Get recipient balance helper function
   const getRecipientBalance = async (currency: string) => {
@@ -203,11 +223,6 @@ export default function ControllerScreen() {
       });
     }
   }, [icpAuthenticated, userPrincipal, selectedNetwork, balanceCurrency]);
-
-  // Responsive breakpoints
-  const isTablet = screenDimensions.width >= 768;
-  const isLargeScreen = screenDimensions.width >= 1024;
-  const isSmallScreen = screenDimensions.width < 480;
 
   const handleLogin = async (network: 'local' | 'mainnet' = 'local') => {
     setLoginLoading(true);
@@ -379,8 +394,11 @@ export default function ControllerScreen() {
                         Alert.alert(t('index:alerts.copied'), t('index:alerts.addressCopied'));
                       }}
                     >
-                      <Text style={[styles.indexAddressText, { color: colors.text }]}>
-                        {userPrincipal.slice(0, 12)}...{userPrincipal.slice(-12)}
+                      <Text 
+                        style={[styles.indexAddressText, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {formattedUserPrincipal}
                       </Text>
                       <Copy size={16} color={colors.textSecondary} />
                     </TouchableOpacity>
@@ -644,7 +662,9 @@ export default function ControllerScreen() {
           onRequestClose={() => setShowLoginModal(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalContainer, { 
+              backgroundColor: colors.card
+            }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>{t('controls:authentication.internetIdentity')}</Text>
                 <TouchableOpacity

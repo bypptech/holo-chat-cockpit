@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, TextInput, Modal, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -68,6 +68,7 @@ interface NetworkStatus {
 export default function NetworkScreen() {
   const { isDark, colors } = useTheme();
   const { t } = useLanguage();
+  const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
 
   const [networkSettings, setNetworkSettings] = useState<NetworkSettings>({
     wifi: true,
@@ -112,6 +113,16 @@ export default function NetworkScreen() {
     backend: 'rdmx6-jaaaa-aaaah-qcaaa-cai',
     frontend: 'rrkah-fqaaa-aaaah-qcuwa-cai'
   });
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenDimensions(window);
+    });
+    return () => subscription?.remove();
+  }, []);
+
+  const isTablet = screenDimensions.width >= 768;
+  const isSmallScreen = screenDimensions.width < 480;
 
   useEffect(() => {
     updateNetworkStatus();
@@ -990,10 +1001,9 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    borderRadius: 20,
-    padding: 0,
+    borderRadius: 16,
+    padding: 20,
     marginHorizontal: 20,
-    maxWidth: 400,
     width: '100%',
     overflow: 'hidden',
   },
@@ -1001,7 +1011,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -1010,7 +1020,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'NotoSansJP-Bold',
   },
   networkOptions: {
-    padding: 20,
+    paddingTop: 20,
     gap: 12,
   },
   networkOption: {
@@ -1027,7 +1037,7 @@ const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   canisterList: {
-    padding: 20,
+    paddingTop: 20,
     gap: 16,
   },
   canisterItem: {

@@ -26,7 +26,9 @@ export const InternetIdentityProvider: React.FC<InternetIdentityProviderProps> =
 
   const login = async (network: 'local' | 'ic' = 'ic') => {
     if (!isWeb) {
-      throw new Error('Internet Identity is only available in web environment');
+      // For React Native, we would need to implement WebView-based authentication
+      // For now, throw a more user-friendly error
+      throw new Error('Internet Identity authentication requires web environment. Please use the web version.');
     }
 
     try {

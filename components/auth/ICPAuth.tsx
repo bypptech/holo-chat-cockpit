@@ -121,7 +121,7 @@ export function ICPAuth({ onAuthChange, onNetworkChange }: ICPAuthProps) {
             {isLoading && (
               <RefreshCw size={20} color="#fff" />
             )}
-            <Text style={styles.authButtonText}>
+            <Text style={styles.authButtonText} numberOfLines={1} adjustsFontSizeToFit={true}>
               {isLoading ? 'Connecting...' : 'Login with Internet Identity'}
             </Text>
           </TouchableOpacity>
@@ -164,7 +164,7 @@ export function ICPAuth({ onAuthChange, onNetworkChange }: ICPAuthProps) {
             ) : (
               <LogOut size={20} color="#fff" />
             )}
-            <Text style={styles.authButtonText}>
+            <Text style={styles.authButtonText} numberOfLines={1} adjustsFontSizeToFit={true}>
               {isLoading ? 'Disconnecting...' : 'Disconnect'}
             </Text>
           </TouchableOpacity>
@@ -280,6 +280,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 12,
     gap: 8,
+    minHeight: 52,
   },
   loginButton: {
     backgroundColor: '#007AFF',
@@ -291,6 +292,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'NotoSansJP-SemiBold',
     color: '#fff',
+    textAlign: 'center',
+    flexShrink: 1,
   },
   userInfo: {
     marginBottom: 24,

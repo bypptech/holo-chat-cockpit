@@ -1,8 +1,12 @@
 import { StyleSheet } from 'react-native';
 
 // Common styles shared across all tabs
-export const createCommonStyles = (colors: any, isDark: boolean) => StyleSheet.create({
-  // Base Layout
+export const createCommonStyles = (colors: any, isDark: boolean, screenDimensions?: any) => {
+  const isTablet = screenDimensions?.width >= 768;
+  const isSmallScreen = screenDimensions?.width < 480;
+  
+  return StyleSheet.create({
+    // Base Layout
   container: {
     flex: 1,
   },
@@ -77,10 +81,9 @@ export const createCommonStyles = (colors: any, isDark: boolean) => StyleSheet.c
     alignItems: 'center',
   },
   modalContainer: {
-    borderRadius: 20,
-    padding: 0,
-    marginHorizontal: 20,
-    maxWidth: 400,
+    borderRadius: 16,
+    padding: isTablet ? 20 : isSmallScreen ? 16 : 20,
+    marginHorizontal: isTablet ? 40 : isSmallScreen ? 16 : 20,
     width: '100%',
     overflow: 'hidden',
   },
@@ -88,7 +91,7 @@ export const createCommonStyles = (colors: any, isDark: boolean) => StyleSheet.c
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -97,7 +100,7 @@ export const createCommonStyles = (colors: any, isDark: boolean) => StyleSheet.c
     fontFamily: 'NotoSansJP-Bold',
   },
   modalContent: {
-    padding: 20,
+    paddingTop: 20,
   },
   
   // Card Components
@@ -173,6 +176,7 @@ export const createCommonStyles = (colors: any, isDark: boolean) => StyleSheet.c
     fontFamily: 'NotoSansJP-Regular',
   },
 });
+};
 
 // AR-specific styles
 export const createArStyles = (colors: any, isDark: boolean) => StyleSheet.create({
@@ -812,6 +816,8 @@ export const createIndexStyles = (colors: any, isDark: boolean, screenDimensions
     flex: isSmallScreen ? 0 : 1,
     width: isSmallScreen ? '100%' : 'auto',
     alignItems: 'center',
+    minHeight: 60,
+    justifyContent: 'center',
   },
   headerRight: {
     flex: isSmallScreen ? 0 : 1,
@@ -990,17 +996,17 @@ export const createIndexStyles = (colors: any, isDark: boolean, screenDimensions
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: isTablet ? 16 : isSmallScreen ? 10 : 12,
-    paddingHorizontal: isTablet ? 20 : isSmallScreen ? 12 : 16,
+    paddingVertical: isSmallScreen ? 10 : 12,
+    paddingHorizontal: isSmallScreen ? 12 : 16,
     borderRadius: 8,
   },
   networkButtonText: {
-    fontSize: isTablet ? 16 : isSmallScreen ? 12 : 14,
+    fontSize: isSmallScreen ? 12 : 14,
     fontFamily: 'NotoSansJP-SemiBold',
     color: 'white',
   },
   networkNote: {
-    fontSize: isTablet ? 14 : isSmallScreen ? 10 : 12,
+    fontSize: isSmallScreen ? 10 : 12,
     fontFamily: 'NotoSansJP-Regular',
     textAlign: 'center',
     marginBottom: 16,
@@ -1012,19 +1018,19 @@ export const createIndexStyles = (colors: any, isDark: boolean, screenDimensions
     width: '100%',
   },
   loginIconContainer: {
-    marginBottom: isTablet ? 20 : isSmallScreen ? 12 : 16,
+    marginBottom: isSmallScreen ? 12 : 16,
   },
   loginTitle: {
-    fontSize: isTablet ? 28 : isSmallScreen ? 20 : 24,
+    fontSize: isSmallScreen ? 20 : 24,
     fontFamily: 'NotoSansJP-Bold',
     marginBottom: 8,
     textAlign: 'center',
   },
   loginDescription: {
-    fontSize: isTablet ? 18 : isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen ? 14 : 16,
     fontFamily: 'NotoSansJP-Regular',
     textAlign: 'center',
-    marginBottom: isTablet ? 28 : isSmallScreen ? 20 : 24,
+    marginBottom: isSmallScreen ? 20 : 24,
   },
   closeButton: {
     padding: 4,
@@ -1553,7 +1559,7 @@ export const createTabStyles = (
   isLargeScreen?: boolean, 
   isSmallScreen?: boolean
 ) => ({
-  common: createCommonStyles(colors, isDark),
+  common: createCommonStyles(colors, isDark, screenDimensions),
   ar: createArStyles(colors, isDark),
   button: createButtonStyles(colors, isDark),
   chat: createChatStyles(colors, isDark),
