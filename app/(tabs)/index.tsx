@@ -83,22 +83,6 @@ export default function ControllerScreen() {
     return `${userPrincipal.slice(0, visibleChars)}...${userPrincipal.slice(-visibleChars)}`;
   }, [userPrincipal, isTablet, isSmallScreen]);
 
-  // Get recipient balance helper function
-  const getRecipientBalance = async (currency: string) => {
-    if (!recipientAddress) return 'N/A';
-    try {
-      // Create a temporary service instance to check recipient balance
-      const tempService = PaymentOperationService.getInstance();
-      await tempService.setNetwork(selectedNetwork);
-      
-      // Note: This requires a method to check balance of a specific address
-      // For now, we'll return 'Not available' as the current service doesn't support this
-      return 'Not available';
-    } catch (error) {
-      return 'Error';
-    }
-  };
-
   // Calculate total amount when transfer amount or gas fee changes
   const calculateTotalAmount = (amount: string, fee: string) => {
     if (!amount || !fee) return '';
@@ -304,16 +288,17 @@ export default function ControllerScreen() {
     
     try {
       await paymentService.setNetwork(selectedNetwork);
-      
+
+      const paymentAddress = paymentService.getPaymentAddress();
       const [balanceICP, balanceUSDC, recipientBalanceICP, recipientBalanceUSDC] = await Promise.all([
         paymentService.getBalance('ICP'),
         paymentService.getBalance('ckUSDC'),
-        getRecipientBalance('ICP'),
-        getRecipientBalance('ckUSDC'),
+        paymentService.getBalance('ICP', paymentAddress),
+        paymentService.getBalance('ckUSDC', paymentAddress),
       ]);
       
       setDebugInfo({
-        paymentAddress: paymentService.getPaymentAddress(),
+        paymentAddress,
         priceICP: paymentService.getPrice('ICP'),
         priceUSDC: paymentService.getPrice('ckUSDC'),
         feeICP: paymentService.getFee('ICP'),
@@ -322,8 +307,8 @@ export default function ControllerScreen() {
         totalAmountUSDC: paymentService.getTotalAmount('ckUSDC'),
         balanceICP: balanceICP.success ? balanceICP.balance! : 'Error',
         balanceUSDC: balanceUSDC.success ? balanceUSDC.balance! : 'Error',
-        recipientBalanceICP: recipientBalanceICP,
-        recipientBalanceUSDC: recipientBalanceUSDC,
+        recipientBalanceICP: paymentAddress ? (recipientBalanceICP.success ? recipientBalanceICP.balance! : 'Error') : 'Not available',
+        recipientBalanceUSDC: paymentAddress ? (recipientBalanceUSDC.success ? recipientBalanceUSDC.balance! : 'Error') : 'Not available',
         lastUpdated: new Date(),
       });
     } catch (error) {

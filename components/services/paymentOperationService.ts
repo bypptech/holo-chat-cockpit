@@ -152,13 +152,13 @@ class PaymentOperationService {
     return "";
   }
 
-  async getBalance(currency: string): Promise<GetBalanceResult> {
+  async getBalance(currency: string, address?:string): Promise<GetBalanceResult> {
     try {
       const { token, ledger, identity } = await this.prepare(currency);
 
       // get balance of Owner
       const balance: BigInt = await ledger.balance({
-        owner: identity.getPrincipal()
+        owner: address ? Principal.fromText(address) : identity.getPrincipal()
       });
 
       return {
