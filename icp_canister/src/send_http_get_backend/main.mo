@@ -1,17 +1,24 @@
 import Blob "mo:core/Blob";
+import Float "mo:core/Float";
 import Time "mo:core/Time";
 import Text "mo:core/Text";
 import Array "mo:core/Array";
 import Int "mo:core/Int";
 import Iter "mo:core/Iter";
 import Map "mo:core/Map";
+import Nat8 "mo:core/Nat8";
+import Nat32 "mo:core/Nat32";
 import Nat64 "mo:core/Nat64";
 import Principal "mo:core/Principal";
+import Debug "mo:core/Debug";
 import IC "ic:aaaaa-aa";
 import IcpLedger "canister:icp_ledger_canister";
+import XRC "canister:exchange_rate_canister";
 import Ledger "ledger";
 
-shared ({caller = owner}) persistent actor class Backend() {
+shared ({caller = owner}) persistent actor class Backend() = this {
+  let canisterId : Principal = Principal.fromActor(this);
+
   var logs : [Text] = [];
 
   func addLog(timestamp : Int, response : Text) {
@@ -82,6 +89,7 @@ shared ({caller = owner}) persistent actor class Backend() {
     paymentWallet: Principal;
     tokens: [(Text, Token)];
     prices: [(Text, Nat)];
+    rates: [(Text, Float)];
   };
 
   transient let tokenMap = Map.fromIter<Text, Token>([
@@ -124,6 +132,11 @@ shared ({caller = owner}) persistent actor class Backend() {
     )
   ].values(), Text.compare);
 
+  var rateMap = Map.fromIter<Text, Float>([
+    ("ICP", 0.2),
+    ("ckUSDC", 1.0),
+  ].values(), Text.compare);
+
   public shared ({caller}) func setPaymentWallet(principal:Principal) : async Bool {
     if (caller != owner) {
       return false;
@@ -144,19 +157,87 @@ shared ({caller = owner}) persistent actor class Backend() {
       paymentWallet;
       tokens = Iter.toArray(Map.entries(tokenMap));
       prices;
+      rates = Iter.toArray(Map.entries(rateMap));
     };
   };
 
-  public shared ({caller}) func updatePrice(currency:Text, price:Nat) : async Bool {
-    if (caller != owner) {
-      return false;
+  type SetPriceResult = {
+    #Ok : [(Text, Nat)];
+    #Err : Text;
+  };
+
+  public shared ({caller}) func setPrice(dollar:Float) : async SetPriceResult {
+    if (caller != owner and caller != canisterId) {
+      return #Err("Not permitted.");
     };
 
-    let ?value = Map.get(priceMap, Text.compare, currency)  else return false;
+    // xrc target currencies
+    var currencies : [Text] = [];
+    for (currency in Map.keys(priceMap)) {
+      if (currency != "ckUSDC") {
+        currencies := Array.concat(currencies, [currency]);
+      }
+    };
+
+    var futures : [async XRC.GetExchangeRateResult] = [];
+    for (currency in currencies.values()) {
+      futures := Array.concat(futures, [(with cycles = 10_000_000_000) XRC.get_exchange_rate({
+        base_asset = {
+          class_ = #Cryptocurrency;
+          symbol = "USDC";
+        };
+        quote_asset = {
+          class_ = #Cryptocurrency;
+          symbol = Text.replace(currency, #text "ck", "");
+        };
+        timestamp = null;
+      })]);
+    };
+
+    var rates : [Float] = [];
+    for (i in futures.keys()) {
+      let currency = currencies[i];
+      let result = await futures[i];
+      switch (result) {
+        case (#Ok(data)) {
+          let rate:Float = Float.fromInt(Int.fromNat(Nat64.toNat(data.rate))) *
+            Float.pow(10.0, -1 * Float.fromInt(Int.fromNat(Nat32.toNat(data.metadata.decimals))));
+          rates := Array.concat(rates, [rate]);
+        };
+        case (#Err(err)) {
+          return #Err("get_exchange_rate() failed. (" # debug_show(err) # ")");
+        };
+      }
+    };
+
+    let now = Time.now();
+    let dollarNat = toNat("ckUSDC", dollar);
+    ignore updatePrice("ckUSDC", dollarNat, now);
+
+    var results : [(Text, Nat)] = [("ckUSDC", dollarNat)];
+    for (i in currencies.keys()) {
+      let currency = currencies[i];
+      let newPrice = toNat(currency, dollar * rates[i]);
+      ignore Map.replace(rateMap, Text.compare, currency, rates[i]);
+      ignore updatePrice(currency, newPrice, now);
+
+      results := Array.concat(results, [(currency, newPrice)]);
+    };
+    return #Ok(results);
+  };
+
+  func toNat(currency:Text, price:Float) : Nat {
+    let ?token = Map.get(tokenMap, Text.compare, currency) else return 0;
+    let validDigits : Int = Float.toInt(Float.ceil(price * Float.pow(10.0, Float.fromInt(Int.fromNat(Nat8.toNat(token.digits))))));
+    return Int.abs(validDigits * Int.pow(10, Int.fromNat(Nat8.toNat(token.decimal - token.digits))));
+  };
+
+  func updatePrice(currency:Text, price:Nat, time:Int) : Bool {
+    let ?value = Map.get(priceMap, Text.compare, currency) else return false; // false is not expected
     let newValue : Price = {
       price;
       oldPrice = value.price;
-      lastUpdated = Time.now();
+      lastUpdated = time;
     };
     ignore Map.replace(priceMap, Text.compare, currency, newValue);
     return true;

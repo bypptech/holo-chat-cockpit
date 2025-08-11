@@ -38,6 +38,17 @@
         }
       },
       "init_arg": "(variant { Init = record { decimals = opt 6; token_symbol = \"ckUSDC\"; token_name = \"ckUSDC\"; minting_account = record { owner = principal \"rwbxt-jvr66-qvpbz-2kbh3-u226q-w6djk-b45cp-66ewo-tpvng-thbkh-wae\"; }; transfer_fee = 10_000; metadata = vec {}; feature_flags = opt record { icrc2 = true }; initial_balances = vec { }; archive_options = record { num_blocks_to_archive = 1000; trigger_threshold = 2000; max_message_size_bytes = null; cycles_for_archive_creation = opt 100_000_000_000_000; node_max_memory_size_bytes = opt 3_221_225_472; controller_id = principal \"2vxsx-fae\"; } } })"
+    },
+    "exchange_rate_canister": {
+      "type": "custom",
+      "candid": "https://raw.githubusercontent.com/dfinity/exchange-rate-canister/refs/tags/2024.11.12/src/xrc/xrc.did",
+      "wasm": "https://github.com/dfinity/exchange-rate-canister/releases/download/2024.11.12/xrc.wasm.gz",
+      "specified_id": "uf6dk-hyaaa-aaaaq-qaaaq-cai",
+      "remote": {
+        "id": {
+          "ic": "uf6dk-hyaaa-aaaaq-qaaaq-cai"
+        }
+      }
     }
   },
   "defaults": {

@@ -55,6 +55,8 @@ class PaymentOperationService {
 
   private prices:{[key:string]: bigint} = {};
 
+  private rates:{[key:string]: Number} = {};
+
   private paymentWallet?:Principal;
 
   /**
@@ -71,7 +73,8 @@ class PaymentOperationService {
     // Update paymentInfo
     this.isMainnet = isMainnet;
     try {
-      const paymentInfo = await this.getPaymentInfo();
+      const actor:any = await this.getBackendActor();
+      const paymentInfo = await actor.getPaymentInfo();
 
       // update supported tokens
       this.tokens = paymentInfo.tokens.reduce(
@@ -88,6 +91,17 @@ class PaymentOperationService {
           const token = this.tokens[currency];
           if (token) {
             obj[currency] = price;
+          }
+          return obj;
+        }, {});
+
+      // update rates
+      this.rates = paymentInfo.rates.reduce(
+        (obj:any, data:any[]) =>{
+          const [ currency, rate ] = data;
+          const token = this.tokens[currency];
+          if (token) {
+            obj[currency] = rate;
           }
           return obj;
         }, {});
@@ -109,11 +123,6 @@ class PaymentOperationService {
     return authClient.getIdentity();
   }
 
-  async getPaymentInfo() {
-    const actor:any = await this.getBackendActor();
-    return await actor.getPaymentInfo();
-  }
-
   getPaymentAddress(): string {
     return this.paymentWallet?.toString() ?? "";
   }
@@ -127,6 +136,10 @@ class PaymentOperationService {
   getFee(currency:string): string {
     const token = this.tokens[currency];
     return token ? this.formatPrice(token.fee, token.decimal, token.digits) : "";
+  }
+
+  getRate(currency:string): Number {
+    return this.rates[currency] ?? NaN;
   }
 
   getTotalAmount(currency:string): string {
@@ -325,6 +338,7 @@ class PaymentOperationService {
         'tokens' : IDL.Vec(IDL.Tuple(IDL.Text, Token)),
         'prices' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
         'paymentWallet' : IDL.Principal,
+        'rates' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64)),
       });
 
       return IDL.Service({
