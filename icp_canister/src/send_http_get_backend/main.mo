@@ -72,6 +72,95 @@ shared ({caller = owner}) persistent actor class Backend() = this {
     decoded_text;
   };
 
+  type Role = {
+    #User;
+    #Admin;
+  };
+
+  type UserInfo = {
+    name: Text;
+    role: Role;
+    image: ?Blob; // png format
+    registerAt: Int;
+  };
+
+  let userMap = Map.fromIter<Principal, UserInfo>([
+    (
+      owner,
+      {
+        name = "";
+        role = #Admin;
+        image = null;
+        registerAt = Time.now();
+      }
+    )
+  ].values(), Principal.compare);
+
+  public shared query ({caller}) func getUserInfo(): async ?UserInfo {
+    return Map.get(userMap, Principal.compare, caller);
+  };
+
+  type SetUserInfoArgument = {
+    name: Text;
+    image: ?Blob;
+  };
+
+  public shared ({caller}) func setUserInfo(info: SetUserInfoArgument) {
+    switch(Map.get(userMap, Principal.compare, caller)) {
+      case (null) {
+        Map.add(userMap, Principal.compare,
+          caller,
+          {
+            name = info.name;
+            role = #User;
+            image = info.image;
+            registerAt = Time.now();
+          });
+      };
+      case (?currentInfo) {
+        ignore Map.replace(userMap, Principal.compare, caller, {
+          name = info.name;
+          role = currentInfo.role;
+          image = if (info.image != null) info.image else currentInfo.image;
+          registerAt = currentInfo.registerAt;
+        });
+      };
+    };
+  };
+
+  public shared ({caller}) func setUserRole(principal:Principal, role:Role): async Bool {
+    // Permission check
+    let ?user = Map.get(userMap, Principal.compare, caller) else {
+      return false;
+    };
+    if (user.role != #Admin) {
+      return false;
+    };
+
+    // Change Role of Target user
+    switch(Map.get(userMap, Principal.compare, principal)) {
+      case (null) {
+        Map.add(userMap, Principal.compare,
+          principal,
+          {
+            name = "";
+            role;
+            image = null;
+            registerAt = Time.now();
+          });
+      };
+      case (?currentInfo) {
+        ignore Map.replace(userMap, Principal.compare, principal, {
+          name = currentInfo.name;
+          role;
+          image = currentInfo.image;
+          registerAt = currentInfo.registerAt;
+        });
+      };
+    };
+    return true;
+  };
+
   type DeviceDetail = {
     #smartGacha: {
       url: Text;
@@ -125,20 +214,25 @@ shared ({caller = owner}) persistent actor class Backend() = this {
   };
 
   public shared ({caller}) func registerDevice(principal:Principal, device:RegisterDeviceArgument) : async RegisterDeviceResult {
-    if (caller != owner and caller != principal) {
+    // Permission check
+    let ?user = Map.get(userMap, Principal.compare, caller) else {
       return #Err("Not permitted.");
     };
+    if (user.role != #Admin) {
+      return #Err("Not permitted.");
+    };
+
     if (Map.containsKey(deviceMap, Principal.compare, principal)) {
       return #Err("The device already registered.");
     };
     Map.add(deviceMap, Principal.compare,
-    principal,
-    {
-      name = device.name;
-      price = device.price;
-      detail = device.detail;
-      registeredAt = Time.now();
-    });
+      principal,
+      {
+        name = device.name;
+        price = device.price;
+        detail = device.detail;
+        registeredAt = Time.now();
+      });
     return #Ok;
   };
 
@@ -148,9 +242,14 @@ shared ({caller = owner}) persistent actor class Backend() = this {
   };
 
   public shared ({caller}) func unregisterDevice(principal:Principal) : async UnresigerDeviceResult {
-    if (caller != owner and caller != principal) {
+    // Permission check
+    let ?user = Map.get(userMap, Principal.compare, caller) else {
       return #Err("Not permitted.");
     };
+    if (user.role != #Admin) {
+      return #Err("Not permitted.");
+    };
+
     if (Map.delete(deviceMap, Principal.compare, principal)) {
       return #Ok;
     } else {
@@ -159,7 +258,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
   };
 
   public shared ({caller}) func runDeviceAfterPayment(deviceId:Principal, currency:Text) : async Text {
-    let ?device = (Map.get(deviceMap, Principal.compare, deviceId) : ?DeviceInfo) else return "Device not found";
+    let ?device = Map.get(deviceMap, Principal.compare, deviceId) else return "Device not found";
     let ?token = Map.get(tokenMap, Text.compare, currency) else return "Unsupported currency";
     let priceToken = toNat(currency, device.price);
 
@@ -326,9 +425,14 @@ shared ({caller = owner}) persistent actor class Backend() = this {
   ].values(), Text.compare);
 
   public shared ({caller}) func setPaymentWallet(principal:Principal) : async Bool {
-    if (caller != owner) {
+    // Permission check
+    let ?user = Map.get(userMap, Principal.compare, caller) else {
       return false;
     };
+    if (user.role != #Admin) {
+      return false;
+    };
+
     paymentWallet := principal;
     return true;
   };
