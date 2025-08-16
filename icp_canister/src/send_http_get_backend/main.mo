@@ -172,6 +172,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
   type DeviceInfo = {
     name: Text;
     price: Float; // USD
+    wallet: Principal;
     detail: DeviceDetail;
     registeredAt: Int;
   };
@@ -180,6 +181,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
     principal: Principal;
     name: Text;
     price: Float;
+    wallet: Principal;
     deviceType: Text;
   };
 
@@ -194,6 +196,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
             principal;
             name = data.name;
             price = data.price;
+            wallet = data.wallet;
             deviceType = debug_show(data.detail);
           }
         }
@@ -205,6 +208,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
   type RegisterDeviceArgument = {
     name: Text;
     price: Float;
+    wallet: Principal;
     detail: DeviceDetail;
   };
 
@@ -230,6 +234,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
       {
         name = device.name;
         price = device.price;
+        wallet = device.wallet;
         detail = device.detail;
         registeredAt = Time.now();
       });
@@ -330,7 +335,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
           subaccount = null;
         };
         to = {
-          owner = paymentWallet;
+          owner = device.wallet;
           subaccount = null;
         };
         amount = priceToken;
