@@ -361,9 +361,6 @@ shared ({caller = owner}) persistent actor class Backend() = this {
     return result;
   };
 
-  // payment
-  var paymentWallet : Principal = owner;
-
   type Token = {
     canisterId: Principal; // Ledger Canister Id
     decimal: Nat8;
@@ -371,17 +368,10 @@ shared ({caller = owner}) persistent actor class Backend() = this {
     fee: Nat; // transaction fee
   };
 
-  type Price = {
-    price: Nat;
-    oldPrice: Nat;
-    lastUpdated: Int;
-  };
-
-   type PaymentInfo = {
-    paymentWallet: Principal;
+  type PaymentInfo = {
     tokens: [(Text, Token)];
-    prices: [(Text, Nat)];
     rates: [(Text, Float)];
+    lastUpdated: Int;
   };
 
   transient let tokenMap = Map.fromIter<Text, Token>([
@@ -405,72 +395,39 @@ shared ({caller = owner}) persistent actor class Backend() = this {
     )
   ].values(), Text.compare);
 
-  var priceMap = Map.fromIter<Text, Price>([
-    (
-      "ICP",
-      {
-        price = 20_000_000; // FIXME 0.2 ICP ($ 5 / ICP) on 2025/08/06
-        oldPrice = 20_000_000;
-        lastUpdated = 0 : Int;
-      },
-    ),
-    (
-      "ckUSDC",
-      {
-        price = 1_000_000; // 1.0
-        oldPrice = 1_000_000;
-        lastUpdated = 0 : Int;
-      }
-    )
-  ].values(), Text.compare);
-
   var rateMap = Map.fromIter<Text, Float>([
-    ("ICP", 0.2),
+    ("ICP", 0.2), // FIXME 0.2 ICP ($ 5 / ICP) on 2025/08/06
     ("ckUSDC", 1.0),
   ].values(), Text.compare);
-
-  public shared ({caller}) func setPaymentWallet(principal:Principal) : async Bool {
-    // Permission check
-    let ?user = Map.get(userMap, Principal.compare, caller) else {
-      return false;
-    };
-    if (user.role != #Admin) {
-      return false;
-    };
-
-    paymentWallet := principal;
-    return true;
-  };
+  var lastUpdated: Int = 0;
 
   public query func getPaymentInfo() : async PaymentInfo {
-    let prices : [(Text, Nat)] = Iter.toArray(
-      Iter.map<(Text, Price), (Text, Nat)>(
-        Map.entries(priceMap),
-        func ((k, v)) { (k, v.price) }
-      )
-    );
-
     return {
-      paymentWallet;
       tokens = Iter.toArray(Map.entries(tokenMap));
-      prices;
       rates = Iter.toArray(Map.entries(rateMap));
+      lastUpdated;
     };
   };
 
-  type SetPriceResult = {
-    #Ok : [(Text, Nat)];
+  type UpdateRateResult = {
+    #Ok : [(Text, Float)];
     #Err : Text;
   };
 
-  public shared ({caller}) func setPrice(dollar:Float) : async SetPriceResult {
-    if (caller != owner and caller != canisterId) {
-      return #Err("Not permitted.");
+  public shared ({caller}) func updateRate() : async UpdateRateResult {
+    // Permission check
+    if (caller != canisterId) {
+      let ?user = Map.get(userMap, Principal.compare, caller) else {
+        return #Err("Not permitted.");
+      };
+      if (user.role != #Admin) {
+        return #Err("Not permitted.");
+      };
     };
 
     // xrc target currencies
     var currencies : [Text] = [];
-    for (currency in Map.keys(priceMap)) {
+    for (currency in Map.keys(rateMap)) {
       if (currency != "ckUSDC") {
         currencies := Array.concat(currencies, [currency]);
       }
@@ -491,7 +448,6 @@ shared ({caller = owner}) persistent actor class Backend() = this {
       })]);
     };
 
-    var rates : [Float] = [];
     for (i in futures.keys()) {
       let currency = currencies[i];
       let result = await futures[i];
@@ -499,7 +455,7 @@ shared ({caller = owner}) persistent actor class Backend() = this {
         case (#Ok(data)) {
           let rate:Float = Float.fromInt(Int.fromNat(Nat64.toNat(data.rate))) *
             Float.pow(10.0, -1 * Float.fromInt(Int.fromNat(Nat32.toNat(data.metadata.decimals))));
-          rates := Array.concat(rates, [rate]);
+          ignore Map.replace(rateMap, Text.compare, currency, rate);
         };
         case (#Err(err)) {
           return #Err("get_exchange_rate() failed. (" # debug_show(err) # ")");
@@ -507,19 +463,8 @@ shared ({caller = owner}) persistent actor class Backend() = this {
       }
     };
 
-    let now = Time.now();
-    let dollarNat = toNat("ckUSDC", dollar);
-    ignore updatePrice("ckUSDC", dollarNat, now);
-
-    var results : [(Text, Nat)] = [("ckUSDC", dollarNat)];
-    for (i in currencies.keys()) {
-      let currency = currencies[i];
-      let newPrice = toNat(currency, dollar * rates[i]);
-      ignore Map.replace(rateMap, Text.compare, currency, rates[i]);
-      ignore updatePrice(currency, newPrice, now);
-
-      results := Array.concat(results, [(currency, newPrice)]);
-    };
+    lastUpdated := Time.now();
+    let results = Iter.toArray(Map.entries(rateMap));
     return #Ok(results);
   };
 
@@ -528,101 +473,4 @@ shared ({caller = owner}) persistent actor class Backend() = this {
     let validDigits : Int = Float.toInt(Float.ceil(price * Float.pow(10.0, Float.fromInt(Int.fromNat(Nat8.toNat(token.digits))))));
     return Int.abs(validDigits * Int.pow(10, Int.fromNat(Nat8.toNat(token.decimal - token.digits))));
   };
-
-  func updatePrice(currency:Text, price:Nat, time:Int) : Bool {
-    let ?value = Map.get(priceMap, Text.compare, currency) else return false; // false is not expected
-    let newValue : Price = {
-      price;
-      oldPrice = value.price;
-      lastUpdated = time;
-    };
-    ignore Map.replace(priceMap, Text.compare, currency, newValue);
-    return true;
-  };
-
-  type PayResult = {
-    #Ok : Nat;
-    #Err : Text;
-  };
-
-  func pay(currency:Text, from:Principal) : async PayResult {
-    let ?token = Map.get(tokenMap, Text.compare, currency) else return #Err("Unsupported Currency");
-    let ?price = Map.get(priceMap, Text.compare, currency) else return #Err("Price not specified");
-    let ledger = actor(Principal.toText(token.canisterId)) : Ledger.Service;
- 
-    let result = await ledger.icrc2_transfer_from({
-      from = {
-        owner = from;
-        subaccount = null;
-      };
-      to = {
-        owner = paymentWallet;
-        subaccount = null;
-      };
-      amount = price.price - token.fee;
-      created_at_time = null;
-      fee = null;
-      memo = null;
-      spender_subaccount = null;
-    });
-    switch (result) {
-      case (#Ok(blockIndex)) {
-        return #Ok(blockIndex);
-      };
-      case (#Err(error)) {
-        // TODO accept oldPrice for a while
-        return #Err(debug_show(error)); // TODO Error message
-      };
-    };
-  };
-
-  public shared func checkTransaction(currency:Text, from:Principal, to:Principal, amount:Nat64, blockIndex:Nat64) : async Bool {
-    if (currency == "ICP") {
-      let result = await IcpLedger.query_blocks({
-        start = blockIndex;
-        length = 1
-      });
-      if (result.first_block_index <= blockIndex and result.blocks.size() == 1) {
-        let ?operation = result.blocks[0].transaction.operation else return false;
-        switch operation {
-          case (#Transfer transfer) { 
-            if (transfer.from == Principal.toLedgerAccount(from, null) and
-                transfer.to   == Principal.toLedgerAccount(to,   null) and
-                transfer.amount.e8s == amount) {
-              return true;
-            } else {
-              return false;
-            }
-          };
-          case _ {
-            return false;
-          };
-        };
-      } else {
-        // TODO Maybe in archive ledger.
-        return false;
-      };
-    } else {
-      let ?token = Map.get(tokenMap, Text.compare, currency) else return false;
-      let ledger = actor(Principal.toText(token.canisterId)) : Ledger.Service;
-      let blockIndexNat = Nat64.toNat(blockIndex);
-      let result = await ledger.get_transactions({
-        start = blockIndexNat; //Nat64.toNat(blockIndex);
-        length = 1;
-      });
-      if (result.first_index <= blockIndexNat and result.transactions.size() == 1) {
-        let ?transfer = result.transactions[0].transfer else return false;
-        if (transfer.from == { owner = from; subaccount = null; } and
-            transfer.to   == { owner = to; subaccount = null; } and
-            transfer.amount == Nat64.toNat(amount)) {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        // TODO Maybe in archive ledger.
-        return false;
-      };
-    };
- };
 };

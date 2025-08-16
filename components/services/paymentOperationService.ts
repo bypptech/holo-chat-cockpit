@@ -335,15 +335,13 @@ class PaymentOperationService {
         'canisterId' : IDL.Principal,
       });
       const PaymentInfo = IDL.Record({
+        'lastUpdated' : IDL.Int,
         'tokens' : IDL.Vec(IDL.Tuple(IDL.Text, Token)),
-        'prices' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
-        'paymentWallet' : IDL.Principal,
         'rates' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64)),
       });
 
       return IDL.Service({
         'getPaymentInfo' : IDL.Func([], [PaymentInfo], ['query']),
-        'setPaymentWallet' : IDL.Func([IDL.Principal], [IDL.Bool], []),
       });
     };
 
